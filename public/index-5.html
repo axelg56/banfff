@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dial Find — Montres Vintage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --black:#0e0e0e;--white:#fafaf8;--gray-light:#f4f4f2;
+  --gray-mid:#e8e8e4;--gray-muted:#b0b0a8;--gray-dark:#6a6a62;
+  --green:#2d6a4f;--red:#9b2226;
+  --body:'Oswald',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--white);color:var(--black);font-family:var(--body);font-size:14px;font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;background:var(--white);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.9s ease;cursor:pointer}
+#splash.out{opacity:0;pointer-events:none}
+.splash-logo{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(28px,5vw,48px);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:56px}
+.splash-drop-month{font-family:var(--body);font-size:14px;font-weight:300;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-dark);margin-bottom:20px}
+.splash-eyebrow{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:32px}
+.splash-cd{display:flex;align-items:flex-start}
+.splash-unit{text-align:center;padding:0 20px}
+.splash-num{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(48px,9vw,88px);line-height:1;display:block}
+.splash-unit-lbl{font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-muted);margin-top:10px;display:block}
+.splash-dot{font-family:'Oswald',sans-serif;font-weight:300;font-size:clamp(36px,6vw,64px);color:var(--gray-mid);padding-top:8px;line-height:1}
+
+/* NAV */
+#nav{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:0.5px solid var(--gray-mid);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:62px}
+.nav-left{display:flex;align-items:center;gap:20px}
+.nav-right{display:flex;align-items:center;gap:14px}
+.logo{font-family:'Oswald',sans-serif;font-weight:700;font-size:18px;letter-spacing:0.1em;text-transform:uppercase}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-family:var(--body);font-size:13px;font-weight:300;color:var(--gray-dark);text-decoration:none;letter-spacing:0.06em;transition:color 0.15s;padding-bottom:2px}
+.nav-links a:hover{color:var(--black)}
+.nav-links a.active{color:var(--black);border-bottom:1px solid var(--black)}
+.icon-btn{width:34px;height:34px;border-radius:50%;border:0.5px solid var(--gray-mid);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-dark);transition:all 0.15s;position:relative}
+.icon-btn:hover{border-color:var(--black);color:var(--black)}
+.cart-dot{position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:var(--black);color:var(--white);font-family:var(--body);font-size:9px;display:none;align-items:center;justify-content:center}
+
+/* HERO */
+#hero{padding:72px 40px 60px;border-bottom:0.5px solid var(--gray-mid);display:flex;align-items:center;justify-content:center}
+.hero-center{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+.hero-logo-big{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(40px,7vw,90px);letter-spacing:0.08em;text-transform:uppercase;line-height:1}
+.hero-drop-month{font-family:var(--body);font-size:14px;font-weight:300;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-dark)}
+.hero-live-badge{display:inline-flex;align-items:center;gap:10px;border:0.5px solid var(--black);padding:10px 20px}
+.hero-live-badge span{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase}
+.hero-tagline{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:clamp(16px,2vw,22px);line-height:1.4;color:var(--black);text-align:left;align-self:flex-start;margin-top:12px}
+.drop-dot{width:6px;height:6px;border-radius:50%;background:var(--black);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.ship-note{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted);letter-spacing:0.04em}
+.ship-note span{border-bottom:0.5px solid var(--gray-mid)}
+
+/* SECTION */
+.section{padding:40px}
+.section-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px}
+.section-title{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-dark)}
+.section-link{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted);text-decoration:none;letter-spacing:0.06em;transition:color 0.15s}
+.section-link:hover{color:var(--black)}
+.filters{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+.filter-btn{font-family:var(--body);font-size:11px;font-weight:300;padding:6px 16px;border:0.5px solid var(--gray-mid);background:none;cursor:pointer;letter-spacing:0.06em;color:var(--gray-dark);transition:all 0.15s}
+.filter-btn.active{border-color:var(--black);color:var(--black)}
+
+/* GRID */
+.watches-grid{display:grid;grid-template-columns:repeat(4,260px);gap:1px;background:var(--gray-mid);justify-content:start}
+.watch-card{background:var(--white);cursor:pointer;transition:background 0.12s;animation:fadeUp 0.3s ease both;width:260px;min-width:260px;max-width:260px}
+.watch-card:hover{background:var(--gray-light)}
+.watch-card.sold{cursor:default}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.watch-img{width:100%;aspect-ratio:1;background:var(--gray-light);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.watch-img img{width:100%;height:100%;object-fit:cover}
+.sold-veil{position:absolute;inset:0;background:rgba(250,250,248,0.72);display:flex;align-items:center;justify-content:center}
+.sold-tag{font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-muted);border:0.5px solid var(--gray-mid);padding:5px 14px;background:var(--white)}
+.watch-info{padding:16px 18px 18px}
+.watch-brand{font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:3px}
+.watch-model{font-family:'Oswald',sans-serif;font-weight:500;font-size:15px;margin-bottom:2px}
+.watch-year{font-family:var(--body);font-size:12px;font-weight:300;color:var(--gray-muted);margin-bottom:12px}
+.watch-footer{display:flex;justify-content:space-between;align-items:center}
+.watch-price{font-family:'Oswald',sans-serif;font-weight:600;font-size:16px}
+.note-pill{font-family:var(--body);font-size:10px;font-weight:300;padding:3px 10px;border:0.5px solid var(--gray-mid);color:var(--gray-dark)}
+.note-pill.high{border-color:var(--black);color:var(--black)}
+
+/* MODAL MONTRE */
+#modal-ov{display:none;position:fixed;inset:0;background:rgba(14,14,14,0.48);z-index:200;align-items:flex-start;justify-content:center;padding:48px 20px;overflow-y:auto}
+#modal-ov.open{display:flex}
+#modal-box{background:var(--white);width:100%;max-width:640px;position:relative;animation:mUp 0.22s ease}
+@keyframes mUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.modal-close{position:absolute;top:14px;right:16px;z-index:2;background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray-muted);line-height:1;transition:color 0.15s}
+.modal-close:hover{color:var(--black)}
+.modal-gallery{display:grid;grid-template-columns:2fr 1fr;gap:1px;background:var(--gray-mid)}
+.modal-main{background:var(--gray-light);aspect-ratio:1;display:flex;align-items:center;justify-content:center;grid-row:span 2;overflow:hidden}
+.modal-main img{width:100%;height:100%;object-fit:cover}
+.modal-thumb{background:var(--gray-light);aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.modal-thumb img{width:100%;height:100%;object-fit:cover}
+.modal-body{padding:28px 32px 32px}
+.modal-brand{font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:6px}
+.modal-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:24px;margin-bottom:3px}
+.modal-year{font-family:var(--body);font-size:13px;font-weight:300;color:var(--gray-muted);margin-bottom:20px}
+.modal-desc{font-family:var(--body);font-size:13px;font-weight:300;line-height:1.75;color:#555;margin-bottom:24px;padding-bottom:24px;border-bottom:0.5px solid var(--gray-mid)}
+.note-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.note-lbl{font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-muted);min-width:36px}
+.note-bars{display:flex;gap:3px}
+.bar{width:20px;height:3px;background:var(--gray-mid)}
+.bar.on{background:var(--black)}
+.note-val{font-family:var(--body);font-size:13px;font-weight:300;color:var(--gray-dark)}
+.modal-specs{display:grid;grid-template-columns:1fr 1fr;border:0.5px solid var(--gray-mid);margin-bottom:24px}
+.spec{padding:11px 16px;border-bottom:0.5px solid var(--gray-mid);border-right:0.5px solid var(--gray-mid)}
+.spec:nth-child(2n){border-right:none}
+.spec:nth-last-child(-n+2){border-bottom:none}
+.spec-lbl{font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:3px}
+.spec-val{font-family:var(--body);font-size:13px;font-weight:400}
+.modal-foot{display:flex;justify-content:space-between;align-items:center;border-top:0.5px solid var(--gray-mid);padding-top:24px}
+.modal-price{font-family:'Oswald',sans-serif;font-weight:700;font-size:28px}
+.modal-ship-note{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted);margin-top:3px}
+.btn-buy{background:var(--black);color:var(--white);border:none;padding:13px 32px;font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:background 0.15s}
+.btn-buy:hover{background:#2a2a2a}
+
+/* PANELS */
+.panel{position:fixed;top:0;bottom:0;width:360px;z-index:300;background:var(--white);display:flex;flex-direction:column;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1)}
+#cart-panel{right:0;border-left:0.5px solid var(--gray-mid);transform:translateX(100%)}
+#cart-panel.open{transform:none}
+#acct-panel{left:0;border-right:0.5px solid var(--gray-mid);transform:translateX(-100%)}
+#acct-panel.open{transform:none}
+.panel-head{padding:20px 24px;border-bottom:0.5px solid var(--gray-mid);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.panel-title{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.14em;text-transform:uppercase}
+.panel-x{background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-muted);line-height:1;transition:color 0.15s}
+.panel-x:hover{color:var(--black)}
+.panel-body{flex:1;overflow-y:auto;padding:24px}
+.panel-empty{font-family:var(--body);font-size:13px;font-weight:300;color:var(--gray-muted);text-align:center;padding:40px 0}
+
+/* CART */
+.cart-row{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 0;border-bottom:0.5px solid var(--gray-mid);gap:10px}
+.cart-row-name{font-family:'Oswald',sans-serif;font-size:14px;margin-bottom:2px}
+.cart-row-year{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted)}
+.cart-row-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.cart-row-price{font-family:'Oswald',sans-serif;font-size:14px}
+.cart-rm{background:none;border:none;cursor:pointer;font-size:14px;color:var(--gray-mid);transition:color 0.15s}
+.cart-rm:hover{color:var(--black)}
+.cart-total-row{display:flex;justify-content:space-between;padding:16px 0 4px;border-top:0.5px solid var(--gray-mid);margin-top:4px}
+.cart-total-lbl{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-dark)}
+.cart-total-val{font-family:'Oswald',sans-serif;font-size:20px}
+.cart-ship{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted);margin-bottom:16px}
+.btn-full{width:100%;background:var(--black);color:var(--white);border:none;padding:13px;font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;margin-bottom:10px}
+.btn-full:hover{background:#2a2a2a}
+.btn-full.secondary{background:none;color:var(--black);border:0.5px solid var(--gray-mid)}
+.btn-full.secondary:hover{border-color:var(--black)}
+
+/* AUTH */
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:0.5px solid var(--gray-mid)}
+.auth-tab{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;padding:10px 20px;cursor:pointer;color:var(--gray-muted);border-bottom:2px solid transparent;margin-bottom:-0.5px;transition:all 0.15s;background:none;border-top:none;border-left:none;border-right:none}
+.auth-tab.active{color:var(--black);border-bottom-color:var(--black)}
+.auth-input{width:100%;padding:10px 12px;margin-bottom:10px;border:0.5px solid var(--gray-mid);background:none;font-family:var(--body);font-size:13px;font-weight:300;color:var(--black);outline:none;transition:border-color 0.15s}
+.auth-input:focus{border-color:var(--black)}
+.auth-input::placeholder{color:var(--gray-muted)}
+.auth-error{font-size:12px;color:var(--red);margin-bottom:10px;display:none}
+.auth-success{font-size:12px;color:var(--green);margin-bottom:10px;display:none}
+.divider{border:none;border-top:0.5px solid var(--gray-mid);margin:20px 0}
+.section-lbl{font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:14px;margin-top:20px;display:block}
+.section-lbl:first-child{margin-top:0}
+
+/* ORDERS */
+.order-card{border:0.5px solid var(--gray-mid);padding:14px 16px;margin-bottom:10px}
+.order-card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.order-card-name{font-family:'Oswald',sans-serif;font-size:14px}
+.order-card-price{font-family:'Oswald',sans-serif;font-size:14px}
+.order-card-meta{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-dark);margin-bottom:6px}
+.order-status-badge{font-family:var(--body);font-size:10px;padding:3px 10px;letter-spacing:0.06em;display:inline-block;margin-bottom:8px}
+.status-preparation{background:#f4f4f2;color:var(--gray-dark);border:0.5px solid var(--gray-mid)}
+.status-expedie{background:#edf6f1;color:var(--green);border:0.5px solid #b7dfc9}
+.status-livre{background:#f4f4f2;color:var(--gray-muted);border:0.5px solid var(--gray-mid)}
+.track-link{display:inline-flex;align-items:center;gap:5px;font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.08em;text-transform:uppercase;color:var(--black);text-decoration:none;border-bottom:0.5px solid var(--gray-mid);padding-bottom:1px;transition:border-color 0.15s}
+.track-link:hover{border-color:var(--black)}
+
+/* CHECKOUT */
+#checkout-panel{position:fixed;inset:0;background:var(--white);z-index:400;display:none;overflow-y:auto}
+#checkout-panel.open{display:block}
+.checkout-wrap{max-width:560px;margin:0 auto;padding:48px 24px}
+.checkout-back{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-dark);cursor:pointer;border:none;background:none;margin-bottom:32px;display:flex;align-items:center;gap:8px;transition:color 0.15s}
+.checkout-back:hover{color:var(--black)}
+.checkout-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:400;margin-bottom:32px}
+.checkout-section{margin-bottom:28px}
+.checkout-section-title{font-family:var(--body);font-size:10px;font-weight:400;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:16px;padding-bottom:10px;border-bottom:0.5px solid var(--gray-mid)}
+.checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.checkout-full{grid-column:1/-1}
+.checkout-input{width:100%;padding:10px 12px;border:0.5px solid var(--gray-mid);background:none;font-family:var(--body);font-size:13px;font-weight:300;color:var(--black);outline:none;transition:border-color 0.15s}
+.checkout-input:focus{border-color:var(--black)}
+.checkout-input::placeholder{color:var(--gray-muted)}
+.checkout-select{width:100%;padding:10px 12px;border:0.5px solid var(--gray-mid);background:none;font-family:var(--body);font-size:13px;font-weight:300;color:var(--black);outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23b0b0a8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.order-summary{background:var(--gray-light);padding:20px;margin-bottom:20px}
+.order-summary-row{display:flex;justify-content:space-between;padding:6px 0;font-family:var(--body);font-size:13px;font-weight:300}
+.order-summary-total{display:flex;justify-content:space-between;padding:12px 0 0;border-top:0.5px solid var(--gray-mid);margin-top:6px}
+.order-summary-total-lbl{font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-dark)}
+.order-summary-total-val{font-family:'Oswald',sans-serif;font-size:20px}
+.payment-notice{background:var(--gray-light);border:0.5px solid var(--gray-mid);padding:14px 16px;font-family:var(--body);font-size:12px;font-weight:300;color:var(--gray-dark);line-height:1.7;margin-bottom:20px}
+.payment-notice strong{font-weight:500;color:var(--black)}
+.checkout-confirm{width:100%;background:var(--black);color:var(--white);border:none;padding:15px;font-family:var(--body);font-size:12px;font-weight:300;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:background 0.15s}
+.checkout-confirm:hover{background:#2a2a2a}
+.checkout-confirm:disabled{background:var(--gray-muted);cursor:not-allowed}
+
+/* CONFIRMATION */
+#confirm-screen{display:none;text-align:center;padding:80px 24px}
+#confirm-screen.open{display:block}
+.confirm-icon{font-size:48px;margin-bottom:24px}
+.confirm-title{font-family:'Oswald',sans-serif;font-size:32px;font-weight:400;margin-bottom:12px}
+.confirm-sub{font-family:var(--body);font-size:14px;font-weight:300;color:var(--gray-dark);line-height:1.7;max-width:400px;margin:0 auto 32px}
+
+/* ARCHIVES + ABOUT */
+.archive-block{border:0.5px solid var(--gray-mid);padding:20px 24px;margin-bottom:10px}
+.archive-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.archive-date{font-family:'Oswald',sans-serif;font-size:15px;font-weight:400}
+.archive-count{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted)}
+.archive-items{font-family:var(--body);font-size:12px;font-weight:300;color:var(--gray-dark);line-height:1.9}
+.about-text{font-family:var(--body);font-size:15px;font-weight:300;line-height:1.85;max-width:580px;margin-bottom:16px}
+
+/* FOOTER */
+footer{border-top:0.5px solid var(--gray-mid);padding:28px 40px}
+.footer-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.footer-logo{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-muted)}
+.footer-info{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted);text-align:right;line-height:1.7}
+.footer-legal{border-top:0.5px solid var(--gray-mid);padding-top:16px;display:flex;gap:20px;flex-wrap:wrap}
+.footer-legal a{font-family:var(--body);font-size:11px;font-weight:300;color:var(--gray-muted);text-decoration:none;letter-spacing:0.06em;cursor:pointer;transition:color 0.15s}
+.footer-legal a:hover{color:var(--black)}
+
+#backdrop{display:none;position:fixed;inset:0;z-index:250;background:rgba(14,14,14,0.3)}
+#backdrop.open{display:block}
+
+#legal-ov{display:none;position:fixed;inset:0;background:rgba(14,14,14,0.5);z-index:500;overflow-y:auto;padding:48px 20px}
+.legal-box{background:var(--white);max-width:680px;margin:0 auto;padding:48px;position:relative;font-family:var(--body);font-weight:300;font-size:14px;line-height:1.8;color:#3a3a38}
+.legal-close{position:absolute;top:20px;right:24px;background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray-muted)}
+.legal-h2{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;margin-bottom:28px}
+.legal-h3{font-family:var(--body);font-size:10px;font-weight:400;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-muted);margin:28px 0 10px}
+.legal-note{font-size:12px;background:var(--gray-light);padding:12px 16px;margin-bottom:24px;color:var(--gray-dark);line-height:1.7}
+.loading{text-align:center;padding:48px;font-family:var(--body);font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-muted)}
+.page-section{animation:fadeUp 0.2s ease}
+.form-input{width:100%;padding:10px 12px;border:0.5px solid var(--gray-mid);background:none;font-family:var(--body);font-size:13px;font-weight:300;color:var(--black);outline:none;transition:border-color 0.15s;resize:vertical}
+.form-input:focus{border-color:var(--black)}
+.form-input::placeholder{color:var(--gray-muted)}
+.form-btn{background:var(--black);color:var(--white);border:none;padding:12px 32px;font-family:var(--body);font-size:11px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:background 0.15s}
+.form-btn:hover{background:#2a2a2a}
+.upload-zone{border:0.5px dashed var(--gray-mid);padding:20px;text-align:center;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--body);font-size:12px;font-weight:300;color:var(--gray-muted);transition:border-color 0.15s}
+.upload-zone:hover{border-color:var(--black);color:var(--black)}
+.nav-links a.active{color:var(--black);border-bottom:1px solid var(--black)}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--gray-mid);border-top-color:var(--black);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">The Dial Find</div>
+  <div class="splash-drop-month" id="splash-drop-month">Drop de Juin 2026</div>
+  <div class="splash-eyebrow">Prochain drop dans</div>
+  <div class="splash-cd">
+    <div class="splash-unit"><span class="splash-num" id="sp-d">00</span><span class="splash-unit-lbl">jours</span></div>
+    <div class="splash-dot">·</div>
+    <div class="splash-unit"><span class="splash-num" id="sp-h">00</span><span class="splash-unit-lbl">heures</span></div>
+    <div class="splash-dot">·</div>
+    <div class="splash-unit"><span class="splash-num" id="sp-m">00</span><span class="splash-unit-lbl">min</span></div>
+    <div class="splash-dot">·</div>
+    <div class="splash-unit"><span class="splash-num" id="sp-s">00</span><span class="splash-unit-lbl">sec</span></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-left">
+    <button class="icon-btn" id="acct-btn" aria-label="Mon compte">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    </button>
+    <span class="logo">The Dial Find</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#" onclick="showSection('drop')">Drop</a></li>
+    <li><a href="#" onclick="showSection('archives')">Archives</a></li>
+    <li><a href="#" onclick="showSection('about')">À propos</a></li>
+    <li><a href="#" onclick="showSection('rachat')">Nous rachetons</a></li>
+    <li><a href="#" onclick="showSection('recherche')">Je recherche</a></li>
+    <li><a href="#" onclick="showSection('contact')">Contact</a></li>
+  </ul>
+  <div class="nav-right" style="margin-left:24px">
+    <button class="icon-btn" id="cart-btn" aria-label="Panier">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span class="cart-dot" id="cart-dot">0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-center">
+    <h1 class="hero-logo-big">The Dial Find</h1>
+    <div class="hero-drop-month" id="hero-drop-month">Drop de Juin 2026</div>
+    <div class="hero-live-badge">
+      <div class="drop-dot"></div>
+      <span>En cours</span>
+    </div>
+    <p class="ship-note" style="margin-top:4px"><span>Livraison gratuite</span> — Mondial Relay · Colissimo · Chronopost</p>
+    <div class="hero-tagline">Chaque montre a<br>une histoire à raconter.</div>
+  </div>
+</section>
+
+<!-- PAGES -->
+<div id="page-drop" class="page-section">
+<!-- DROP -->
+<section class="section" id="drop">
+  <div class="section-header">
+    <span class="section-title">Drop actuel</span>
+    <a href="#archives" class="section-link">Archives →</a>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterW('all',this)">Tous</button>
+    <button class="filter-btn" onclick="filterW('dispo',this)">Disponibles</button>
+    <button class="filter-btn" onclick="filterW('sold',this)">Vendus</button>
+  </div>
+  <div class="watches-grid" id="wgrid" style="display:grid;grid-template-columns:repeat(4,260px);gap:1px;background:#e8e8e4;justify-content:start">
+    <div class="loading"><span class="spinner"></span>Chargement...</div>
+  </div>
+</section>
+
+</div><!-- /page-drop -->
+
+<div id="page-archives" class="page-section" style="display:none">
+<!-- ARCHIVES -->
+<section class="section" id="archives" style="border-top:0.5px solid var(--gray-mid)">
+  <div class="section-header"><span class="section-title">Archives des drops</span></div>
+  <div id="archives-list"><div class="loading"><span class="spinner"></span>Chargement...</div></div>
+</section>
+
+</div><!-- /page-archives -->
+
+<div id="page-about" class="page-section" style="display:none">
+<!-- ABOUT -->
+<section class="section" id="about" style="border-top:0.5px solid var(--gray-mid)">
+  <div class="section-header"><span class="section-title">À propos</span></div>
+  <p class="about-text">The Dial Find, c'est une chasse permanente. Brocantes, vide-greniers, marchés aux puces — chaque montre est trouvée, triée sur le volet, vérifiée et documentée avant de rejoindre un drop.</p>
+  <p class="about-text" style="color:var(--gray-dark)">Pas de revente à la chaîne. Chaque pièce a une histoire que je m'efforce de raconter honnêtement — état, calibre, particularités. Ce que vous voyez est ce que vous recevez.</p>
+</section>
+
+</div><!-- /page-about -->
+
+<!-- PAGE RACHAT -->
+<div id="page-rachat" class="page-section" style="display:none">
+<section class="section">
+  <div class="section-header"><span class="section-title">Nous rachetons vos montres</span></div>
+  <div style="max-width:560px">
+    <p style="font-family:var(--body);font-size:14px;font-weight:300;color:var(--gray-dark);line-height:1.8;margin-bottom:32px">
+      Tu as une montre vintage qui prend la poussière ? On est peut-être acheteur. Envoie-nous les infos et on te répond sous 48h avec une offre si la pièce nous intéresse.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Prénom *</label>
+        <input class="form-input" id="r-prenom" type="text" placeholder="Votre prénom">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Email *</label>
+        <input class="form-input" id="r-email" type="email" placeholder="votre@email.fr">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Marque *</label>
+        <input class="form-input" id="r-marque" type="text" placeholder="Seiko, Omega...">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Modèle</label>
+        <input class="form-input" id="r-modele" type="text" placeholder="5 Automatic...">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Année estimée</label>
+        <input class="form-input" id="r-annee" type="text" placeholder="1974">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Prix souhaité (€)</label>
+        <input class="form-input" id="r-prix" type="number" placeholder="150">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">État & description</label>
+        <textarea class="form-input" id="r-desc" rows="3" placeholder="Décrivez l'état, les éventuels défauts, ce qui est fourni (boîte, bracelet...)"></textarea>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Photos (optionnel)</label>
+        <div class="upload-zone" onclick="document.getElementById('r-photos').click()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Cliquer pour ajouter des photos</span>
+        </div>
+        <input type="file" id="r-photos" multiple accept="image/*" style="display:none">
+      </div>
+    </div>
+    <div id="rachat-msg" style="display:none;margin-top:16px;font-family:var(--body);font-size:13px;color:var(--green)"></div>
+    <button class="form-btn" onclick="submitRachat()" style="margin-top:20px">Envoyer ma montre</button>
+  </div>
+</section>
+</div><!-- /page-rachat -->
+
+<!-- PAGE RECHERCHE -->
+<div id="page-recherche" class="page-section" style="display:none">
+<section class="section">
+  <div class="section-header"><span class="section-title">Je recherche une montre précise</span></div>
+  <div style="max-width:560px">
+    <p style="font-family:var(--body);font-size:14px;font-weight:300;color:var(--gray-dark);line-height:1.8;margin-bottom:32px">
+      Tu as une montre précise en tête ? Décris-nous ce que tu cherches et on t'avertit dès qu'on tombe dessus lors de nos chasses.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Prénom *</label>
+        <input class="form-input" id="s-prenom" type="text" placeholder="Votre prénom">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Email *</label>
+        <input class="form-input" id="s-email" type="email" placeholder="votre@email.fr">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Marque recherchée *</label>
+        <input class="form-input" id="s-marque" type="text" placeholder="Seiko, Longines...">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Modèle (si précis)</label>
+        <input class="form-input" id="s-modele" type="text" placeholder="Speedmaster, Seamaster...">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Période</label>
+        <input class="form-input" id="s-periode" type="text" placeholder="Années 60-70">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Budget max (€)</label>
+        <input class="form-input" id="s-budget" type="number" placeholder="300">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Précisions supplémentaires</label>
+        <textarea class="form-input" id="s-note" rows="3" placeholder="Couleur du cadran, type de boîtier, avec ou sans bracelet d'origine..."></textarea>
+      </div>
+    </div>
+    <div id="recherche-msg" style="display:none;margin-top:16px;font-family:var(--body);font-size:13px;color:var(--green)"></div>
+    <button class="form-btn" onclick="submitRecherche()" style="margin-top:20px">Envoyer ma recherche</button>
+  </div>
+</section>
+</div><!-- /page-recherche -->
+
+<!-- PAGE CONTACT -->
+<div id="page-contact" class="page-section" style="display:none">
+<section class="section">
+  <div class="section-header"><span class="section-title">Contact</span></div>
+  <div style="max-width:560px">
+    <p style="font-family:var(--body);font-size:14px;font-weight:300;color:var(--gray-dark);line-height:1.8;margin-bottom:32px">
+      Une question sur une montre, une commande, ou simplement envie d'échanger ? On répond sous 24h.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Prénom *</label>
+        <input class="form-input" id="c-prenom" type="text" placeholder="Votre prénom">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Email *</label>
+        <input class="form-input" id="c-email" type="email" placeholder="votre@email.fr">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Sujet *</label>
+        <input class="form-input" id="c-sujet" type="text" placeholder="Question sur une montre, commande...">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1">
+        <label style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark)">Message *</label>
+        <textarea class="form-input" id="c-message" rows="4" placeholder="Votre message..."></textarea>
+      </div>
+    </div>
+    <div id="contact-msg" style="display:none;margin-top:16px;font-family:var(--body);font-size:13px;color:var(--green)"></div>
+    <button class="form-btn" onclick="submitContact()" style="margin-top:20px">Envoyer le message</button>
+    <div style="margin-top:40px;padding-top:24px;border-top:0.5px solid var(--gray-mid)">
+      <div style="font-family:var(--body);font-size:10px;font-weight:300;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:16px">Réseaux sociaux</div>
+      <div style="display:flex;gap:16px">
+        <a href="#" id="link-instagram" style="font-family:var(--body);font-size:13px;font-weight:300;color:var(--gray-dark);text-decoration:none;border-bottom:0.5px solid var(--gray-mid);padding-bottom:2px">Instagram — Bientôt</a>
+        <a href="#" id="link-tiktok" style="font-family:var(--body);font-size:13px;font-weight:300;color:var(--gray-dark);text-decoration:none;border-bottom:0.5px solid var(--gray-mid);padding-bottom:2px">TikTok — Bientôt</a>
+      </div>
+    </div>
+  </div>
+</section>
+</div><!-- /page-contact -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <span class="footer-logo">The Dial Find</span>
+    <div class="footer-info">Bordeaux, France<br>Livraison gratuite · Paiement sécurisé</div>
+  </div>
+  <div class="footer-legal">
+    <a onclick="openLegal('mentions')">Mentions légales</a>
+    <a onclick="openLegal('cgv')">Conditions générales de vente</a>
+    <a onclick="openLegal('confidentialite')">Politique de confidentialité</a>
+    <a onclick="openLegal('retour')">Politique de retour</a>
+    <a onclick="openLegal('cookies')">Cookies</a>
+  </div>
+</footer>
+
+<!-- MODAL MONTRE -->
+<div id="modal-ov"><div id="modal-box"></div></div>
+
+<!-- BACKDROP -->
+<div id="backdrop"></div>
+
+<!-- CART PANEL -->
+<div class="panel" id="cart-panel">
+  <div class="panel-head"><span class="panel-title">Panier</span><button class="panel-x" id="cart-x">✕</button></div>
+  <div class="panel-body" id="cart-body"><p class="panel-empty">Votre panier est vide.</p></div>
+</div>
+
+<!-- ACCOUNT PANEL -->
+<div class="panel" id="acct-panel">
+  <div class="panel-head">
+    <span class="panel-title" id="acct-panel-title">Mon compte</span>
+    <button class="panel-x" id="acct-x">✕</button>
+  </div>
+  <div class="panel-body" id="acct-body"><div class="loading"><span class="spinner"></span></div></div>
+</div>
+
+<!-- CHECKOUT -->
+<div id="checkout-panel">
+  <div class="checkout-wrap">
+    <button class="checkout-back" onclick="closeCheckout()">← Retour au panier</button>
+    <div class="checkout-title">Finaliser la commande</div>
+
+    <div class="checkout-section">
+      <div class="checkout-section-title">Récapitulatif</div>
+      <div class="order-summary" id="checkout-summary"></div>
+    </div>
+
+    <div class="checkout-section">
+      <div class="checkout-section-title">Informations de livraison</div>
+      <div class="checkout-grid">
+        <div class="form-group"><input class="checkout-input" type="text" id="co-prenom" placeholder="Prénom *" required></div>
+        <div class="form-group"><input class="checkout-input" type="text" id="co-nom" placeholder="Nom *" required></div>
+        <div class="form-group checkout-full"><input class="checkout-input" type="email" id="co-email" placeholder="Email *" required></div>
+        <div class="form-group checkout-full"><input class="checkout-input" type="text" id="co-adresse" placeholder="Adresse *" required></div>
+        <div class="form-group"><input class="checkout-input" type="text" id="co-cp" placeholder="Code postal *" required></div>
+        <div class="form-group"><input class="checkout-input" type="text" id="co-ville" placeholder="Ville *" required></div>
+        <div class="form-group checkout-full">
+          <select class="checkout-select" id="co-pays">
+            <option value="France">France métropolitaine</option>
+            <option value="DOM-TOM">DOM-TOM</option>
+            <option value="Belgique">Belgique</option>
+            <option value="Suisse">Suisse</option>
+            <option value="Luxembourg">Luxembourg</option>
+          </select>
+        </div>
+        <div class="form-group checkout-full"><input class="checkout-input" type="tel" id="co-tel" placeholder="Téléphone"></div>
+      </div>
+    </div>
+
+    <div class="checkout-section">
+      <div class="checkout-section-title">Transporteur</div>
+      <div class="checkout-grid">
+        <label style="display:flex;align-items:center;gap:10px;padding:12px;border:0.5px solid var(--gray-mid);cursor:pointer;grid-column:1/-1" id="carrier-colissimo">
+          <input type="radio" name="carrier" value="colissimo" checked style="width:14px;height:14px">
+          <div><div style="font-family:'Oswald',sans-serif;font-size:14px">Colissimo</div><div style="font-family:var(--body);font-size:11px;color:var(--gray-muted)">La Poste — 2 à 3 jours ouvrés</div></div>
+          <span style="margin-left:auto;font-family:'Oswald',sans-serif;font-size:14px">Gratuit</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:12px;border:0.5px solid var(--gray-mid);cursor:pointer;grid-column:1/-1" id="carrier-mondialrelay">
+          <input type="radio" name="carrier" value="mondialrelay" style="width:14px;height:14px">
+          <div><div style="font-family:'Oswald',sans-serif;font-size:14px">Mondial Relay</div><div style="font-family:var(--body);font-size:11px;color:var(--gray-muted)">Point relais — 3 à 5 jours ouvrés</div></div>
+          <span style="margin-left:auto;font-family:'Oswald',sans-serif;font-size:14px">Gratuit</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:12px;border:0.5px solid var(--gray-mid);cursor:pointer;grid-column:1/-1" id="carrier-chronopost">
+          <input type="radio" name="carrier" value="chronopost" style="width:14px;height:14px">
+          <div><div style="font-family:'Oswald',sans-serif;font-size:14px">Chronopost</div><div style="font-family:var(--body);font-size:11px;color:var(--gray-muted)">Express — 1 jour ouvré</div></div>
+          <span style="margin-left:auto;font-family:'Oswald',sans-serif;font-size:14px">Gratuit</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="checkout-section">
+      <div class="checkout-section-title">Paiement</div>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--gray-light);border:0.5px solid var(--gray-mid);padding:14px 16px;margin-bottom:16px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span style="font-family:var(--body);font-size:12px;font-weight:300;color:var(--gray-dark)">Paiement 100% sécurisé par <strong style="color:var(--black)">Stripe</strong> — Visa, Mastercard, Apple Pay</span>
+      </div>
+      <div style="font-family:var(--body);font-size:11px;color:var(--gray-muted);margin-bottom:16px">En continuant, vous acceptez les <a onclick="openLegal('cgv')" style="color:var(--black);cursor:pointer">CGV</a> et la <a onclick="openLegal('confidentialite')" style="color:var(--black);cursor:pointer">politique de confidentialité</a>.</div>
+      <button class="checkout-confirm" onclick="confirmOrder()" id="confirm-btn">Payer en toute sécurité →</button>
+    </div>
+
+    <div id="confirm-screen">
+      <div class="confirm-icon">✓</div>
+      <div class="confirm-title">Commande confirmée</div>
+      <div class="confirm-sub" id="confirm-msg"></div>
+      <button class="btn-full" onclick="closeCheckout();clearCart()" style="max-width:300px;margin:0 auto">Retour à la boutique</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGAL -->
+<div id="legal-ov">
+  <div class="legal-box">
+    <button class="legal-close" onclick="closeLegal()">✕</button>
+    <div id="legal-content"></div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://kqxxxfhmurghugzzccuq.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxeHh4ZmhtdXJnaHVnenpjY3VxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODE4MjksImV4cCI6MjA5NTg1NzgyOX0.J7Tk8sjxeWQ2M3eWGVjaE3mKULgAgz-0eg2xZ9-yd7k';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+let WATCHES=[], cart=[], currentUser=null;
+
+// ── AUTH STATE ──
+sb.auth.onAuthStateChange((event,session)=>{
+  currentUser=session?.user||null;
+  if(document.getElementById('acct-panel').classList.contains('open')) renderAcctPanel();
+  updateNavIcon();
+});
+
+function updateNavIcon(){
+  const btn=document.getElementById('acct-btn');
+  if(currentUser){
+    btn.style.borderColor='var(--black)';
+    btn.style.color='var(--black)';
+  } else {
+    btn.style.borderColor='';
+    btn.style.color='';
+  }
+}
+
+// ── SPLASH ──
+function getDropMonth(date){
+  const d=date?new Date(date):new Date();
+  return 'Drop de '+d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase());
+}
+
+async function initSplash(){
+  const splash=document.getElementById('splash');
+
+  // Click anywhere on splash to dismiss (useful for testing)
+  splash.addEventListener('click', ()=>dismissSplash());
+
+  try {
+    const {data,error}=await sb.from('drops').select('*').order('created_at',{ascending:false}).limit(1);
+    if(error) throw error;
+    const drop=data&&data.length?data[0]:null;
+
+    // Set drop month on both splash and hero
+    const monthLabel=getDropMonth(drop?.date);
+    document.getElementById('splash-drop-month').textContent=monthLabel;
+    document.getElementById('hero-drop-month').textContent=monthLabel;
+
+    if(!drop){runSplashCD(new Date(Date.now()+3*86400000),splash);return;}
+    const START=new Date(drop.date), END=new Date(START.getTime()+(drop.duration||48)*3600000), NOW=new Date();
+    if(NOW>=START&&NOW<=END){
+      dismissSplash();
+    } else if(NOW>END){
+      dismissSplash();
+    } else {
+      runSplashCD(START,splash);
+    }
+  } catch(e) {
+    console.warn('Splash error:', e);
+    // If anything fails, show splash with default 3-day countdown
+    runSplashCD(new Date(Date.now()+3*86400000),splash);
+  }
+}
+
+function dismissSplash(){
+  const splash=document.getElementById('splash');
+  splash.classList.add('out');
+  setTimeout(()=>{ splash.style.display='none'; },900);
+}
+
+function runSplashCD(target,splash){
+  function tick(){
+    const diff=target-new Date();
+    if(diff<=0){dismissSplash();return;}
+    const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+    document.getElementById('sp-d').textContent=String(d).padStart(2,'0');
+    document.getElementById('sp-h').textContent=String(h).padStart(2,'0');
+    document.getElementById('sp-m').textContent=String(m).padStart(2,'0');
+    document.getElementById('sp-s').textContent=String(s).padStart(2,'0');
+    setTimeout(tick,1000);
+  }tick();
+}
+
+
+
+// ── WATCHES ──
+function wSVG(sz){
+  const c=sz/2,rc=sz*0.3;
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" fill="none"><circle cx="${c}" cy="${c}" r="${c-3}" stroke="#d8d8d4" stroke-width="0.5"/><circle cx="${c}" cy="${c}" r="${rc}" stroke="#c8c8c4" stroke-width="0.5"/><line x1="${c}" y1="${c}" x2="${c+rc*0.55*Math.sin(-0.6)}" y2="${c-rc*0.55*Math.cos(-0.6)}" stroke="#999" stroke-width="1" stroke-linecap="round"/><line x1="${c}" y1="${c}" x2="${c+rc*0.42*Math.sin(1.9)}" y2="${c-rc*0.42*Math.cos(1.9)}" stroke="#777" stroke-width="1" stroke-linecap="round"/><circle cx="${c}" cy="${c}" r="2" fill="#bbb"/></svg>`;
+}
+
+function renderGrid(filter='all'){
+  const g=document.getElementById('wgrid');
+  const filtered=WATCHES.filter(w=>filter==='all'||(filter==='dispo'&&(w.status==='dispo'||w.status==='drop'))||(filter==='sold'&&w.status==='sold'));
+  if(!filtered.length){g.innerHTML='<div class="loading">Aucune montre</div>';return;}
+  g.innerHTML='';
+  filtered.forEach((w,i)=>{
+    const sold=w.status==='sold';
+    const el=document.createElement('div');
+    el.className='watch-card'+(sold?' sold':'');
+    el.style.animationDelay=(i*0.05)+'s';
+    const imgHtml=w.photos&&w.photos.length?`<img src="${w.photos[0]}" alt="${w.brand} ${w.model}">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">${wSVG(80)}</div>`;
+    el.innerHTML=`<div class="watch-img">${imgHtml}${sold?'<div class="sold-veil"><span class="sold-tag">Vendu</span></div>':''}</div>
+    <div class="watch-info">
+      <div class="watch-brand">${w.brand}</div>
+      <div class="watch-model">${w.model}</div>
+      <div class="watch-year">${w.year||''}</div>
+      <div class="watch-footer"><span class="watch-price">${w.sell} €</span><span class="note-pill${w.note>=8?' high':''}">${w.note}/10</span></div>
+    </div>`;
+    if(!sold)el.addEventListener('click',()=>openModal(w));
+    g.appendChild(el);
+  });
+}
+
+function filterW(f,btn){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderGrid(f);}
+
+// ── MODAL ──
+function noteBars(n){return Array.from({length:10},(_,i)=>`<div class="bar${i<n?' on':''}"></div>`).join('');}
+
+function openModal(w){
+  const imgs=w.photos&&w.photos.length>=1?`<img src="${w.photos[0]}" alt="">`:wSVG(130);
+  const t1=w.photos&&w.photos.length>=2?`<img src="${w.photos[1]}" alt="">`:wSVG(60);
+  const t2=w.photos&&w.photos.length>=3?`<img src="${w.photos[2]}" alt="">`:wSVG(60);
+  document.getElementById('modal-box').innerHTML=`
+    <button class="modal-close" id="mc">✕</button>
+    <div class="modal-gallery">
+      <div class="modal-main">${imgs}</div>
+      <div class="modal-thumb">${t1}</div>
+      <div class="modal-thumb">${t2}</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-brand">${w.brand}</div>
+      <div class="modal-title">${w.model}</div>
+      <div class="modal-year">${w.year||''}</div>
+      ${w.description?`<p class="modal-desc">${w.description}</p>`:''}
+      <div class="note-row"><span class="note-lbl">État</span><div class="note-bars">${noteBars(w.note)}</div><span class="note-val">${w.note}/10</span></div>
+      <div class="modal-specs">
+        <div class="spec"><div class="spec-lbl">Calibre</div><div class="spec-val">${w.calibre||'—'}</div></div>
+        <div class="spec"><div class="spec-lbl">Boîtier</div><div class="spec-val">${w.boitier||'—'}</div></div>
+        <div class="spec"><div class="spec-lbl">Bracelet</div><div class="spec-val">${w.bracelet||'—'}</div></div>
+        <div class="spec"><div class="spec-lbl">Année</div><div class="spec-val">${w.year||'—'}</div></div>
+      </div>
+      <div class="modal-foot">
+        <div><div class="modal-price">${w.sell} €</div><div class="modal-ship-note">Livraison gratuite incluse</div></div>
+        <button class="btn-buy" onclick='addCart(${JSON.stringify(w).replace(/'/g,"&#39;")})'>Ajouter au panier</button>
+      </div>
+    </div>`;
+  document.getElementById('modal-ov').classList.add('open');
+  document.getElementById('mc').addEventListener('click',closeModal);
+}
+function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+document.getElementById('modal-ov').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ── CART ──
+function addCart(w){
+  if(typeof w==='string')w=JSON.parse(w);
+  cart.push({...w,cid:Date.now()});
+  updateCartUI();closeModal();openCart();
+}
+function rmCart(cid){cart=cart.filter(c=>c.cid!==cid);updateCartUI();}
+function clearCart(){cart=[];updateCartUI();}
+
+function updateCartUI(){
+  const dot=document.getElementById('cart-dot');
+  dot.textContent=cart.length;dot.style.display=cart.length?'flex':'none';
+  const body=document.getElementById('cart-body');
+  if(!cart.length){body.innerHTML='<p class="panel-empty">Votre panier est vide.</p>';return;}
+  const total=cart.reduce((s,w)=>s+w.sell,0);
+  body.innerHTML=cart.map(w=>`
+    <div class="cart-row">
+      <div><div class="cart-row-name">${w.brand} ${w.model}</div><div class="cart-row-year">${w.year||''}</div></div>
+      <div class="cart-row-right"><span class="cart-row-price">${w.sell} €</span><button class="cart-rm" onclick="rmCart(${w.cid})">✕</button></div>
+    </div>`).join('')+
+  `<div class="cart-total-row"><span class="cart-total-lbl">Total</span><span class="cart-total-val">${total} €</span></div>
+   <p class="cart-ship">Livraison gratuite incluse</p>
+   <button class="btn-full" onclick="openCheckout()">Commander</button>
+   <button class="btn-full secondary" onclick="closeCart()">Continuer les achats</button>`;
+}
+
+// ── CHECKOUT ──
+function openCheckout(){
+  closeCart();
+  const total=cart.reduce((s,w)=>s+w.sell,0);
+  document.getElementById('checkout-summary').innerHTML=
+    cart.map(w=>`<div class="order-summary-row"><span>${w.brand} ${w.model} (${w.year||''})</span><span>${w.sell} €</span></div>`).join('')+
+    `<div class="order-summary-total"><span class="order-summary-total-lbl">Total</span><span class="order-summary-total-val">${total} €</span></div>`;
+  document.getElementById('confirm-screen').classList.remove('open');
+  document.getElementById('confirm-screen').style.display='none';
+  // Prefill email if logged in
+  if(currentUser&&currentUser.email) document.getElementById('co-email').value=currentUser.email;
+  document.getElementById('checkout-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeCheckout(){
+  document.getElementById('checkout-panel').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+async function confirmOrder(){
+  const prenom=document.getElementById('co-prenom').value.trim();
+  const nom=document.getElementById('co-nom').value.trim();
+  const email=document.getElementById('co-email').value.trim();
+  const adresse=document.getElementById('co-adresse').value.trim();
+  const cp=document.getElementById('co-cp').value.trim();
+  const ville=document.getElementById('co-ville').value.trim();
+  const pays=document.getElementById('co-pays').value;
+  const tel=document.getElementById('co-tel').value.trim();
+  const carrier=document.querySelector('input[name="carrier"]:checked').value;
+
+  if(!prenom||!nom||!email||!adresse||!cp||!ville){
+    alert('Merci de remplir tous les champs obligatoires.');return;
+  }
+
+  const btn=document.getElementById('confirm-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Redirection vers le paiement...';
+
+  const orderRef='TDF-'+Date.now().toString(36).toUpperCase();
+  const total=cart.reduce((s,w)=>s+w.sell,0);
+
+  // Save order to Supabase first (non-blocking)
+  try {
+    await sb.from('orders').insert({
+      ref:orderRef,
+      user_id:currentUser?.id||null,
+      email,prenom,nom,adresse,cp,ville,pays,tel,
+      carrier,total,
+      items:cart.map(w=>w.id).filter(id=>id),
+      status:'en_attente',
+      created_at:new Date().toISOString()
+    });
+  } catch(e) { console.warn('Order save error (non-blocking):', e); }
+
+  // Create Stripe checkout session
+  try {
+    const res=await fetch('/api/create-checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        items:cart,
+        customer:{ref:orderRef,prenom,nom,email,carrier},
+        success_url:window.location.origin+'?paiement=ok',
+        cancel_url:window.location.origin+'?paiement=annule',
+      })
+    });
+    const data=await res.json();
+    if(data.url){
+      window.location.href=data.url;
+    } else {
+      throw new Error(data.error||'Erreur Stripe');
+    }
+  } catch(err){
+    btn.disabled=false;
+    btn.textContent='Payer en toute sécurité →';
+    alert('Erreur de paiement : '+err.message+'. Contactez contact@thedialfind.fr');
+  }
+}
+
+// ── ACCOUNT PANEL ──
+async function renderAcctPanel(){
+  const body=document.getElementById('acct-body');
+  const {data:{session}}=await sb.auth.getSession();
+  currentUser=session?.user||null;
+
+  if(!currentUser){
+    // Show login / register tabs
+    body.innerHTML=`
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</button>
+        <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Créer un compte</button>
+      </div>
+      <div id="auth-login">
+        <div class="auth-error" id="login-err"></div>
+        <input class="auth-input" type="email" id="login-email" placeholder="Email">
+        <input class="auth-input" type="password" id="login-pw" placeholder="Mot de passe">
+        <button class="btn-full" onclick="doLogin()">Se connecter</button>
+        <div style="text-align:center;margin-top:12px">
+          <span style="font-family:var(--body);font-size:11px;color:var(--gray-muted);cursor:pointer;border-bottom:0.5px solid var(--gray-mid)" onclick="doForgot()">Mot de passe oublié ?</span>
+        </div>
+      </div>
+      <div id="auth-register" style="display:none">
+        <div class="auth-error" id="reg-err"></div>
+        <div class="auth-success" id="reg-ok"></div>
+        <input class="auth-input" type="text" id="reg-prenom" placeholder="Prénom">
+        <input class="auth-input" type="text" id="reg-nom" placeholder="Nom">
+        <input class="auth-input" type="email" id="reg-email" placeholder="Email">
+        <input class="auth-input" type="password" id="reg-pw" placeholder="Mot de passe (min. 6 caractères)">
+        <button class="btn-full" onclick="doRegister()">Créer mon compte</button>
+      </div>`;
+    return;
+  }
+
+  // Logged in — show account + orders
+  const {data:orders}=await sb.from('orders').select('*').eq('email',currentUser.email).order('created_at',{ascending:false});
+  const carriers={colissimo:'Colissimo',mondialrelay:'Mondial Relay',chronopost:'Chronopost'};
+
+  body.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:16px">${currentUser.user_metadata?.prenom||''} ${currentUser.user_metadata?.nom||''}</div>
+        <div style="font-family:var(--body);font-size:12px;color:var(--gray-muted)">${currentUser.email}</div>
+      </div>
+      <button class="btn-full secondary" style="width:auto;padding:6px 14px;font-size:10px;margin-bottom:0" onclick="doLogout()">Déconnexion</button>
+    </div>
+    <hr style="border:none;border-top:0.5px solid var(--gray-mid);margin-bottom:20px">
+    <span class="section-lbl">Mes commandes</span>
+    ${(orders||[]).length===0?'<p style="font-family:var(--body);font-size:12px;color:var(--gray-muted)">Aucune commande pour l\'instant.</p>':
+    (orders||[]).map(o=>{
+      const statusLabel={en_attente:'En attente de paiement',payee:'Payée',en_preparation:'En préparation',expediee:'Expédiée',livree:'Livrée'}[o.status]||o.status;
+      const statusClass={en_attente:'status-preparation',payee:'status-preparation',en_preparation:'status-preparation',expediee:'status-expedie',livree:'status-livre'}[o.status]||'status-preparation';
+      const trackUrl=o.tracking?(o.carrier==='colissimo'?`https://www.laposte.fr/outils/suivre-vos-envois?code=${o.tracking}`:o.carrier==='mondialrelay'?`https://www.mondialrelay.fr/suivi-de-colis/?NumExpedition=${o.tracking}`:`https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=${o.tracking}`):null;
+      return `<div class="order-card">
+        <div class="order-card-head"><span class="order-card-name">${o.ref}</span><span class="order-card-price">${o.total} €</span></div>
+        <div class="order-card-meta">${new Date(o.created_at).toLocaleDateString('fr-FR')} · ${carriers[o.carrier]||o.carrier||'—'}</div>
+        <span class="order-status-badge ${statusClass}">${statusLabel}</span>
+        ${trackUrl?`<br><a href="${trackUrl}" target="_blank" class="track-link">Suivre le colis <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`:''}
+      </div>`;
+    }).join('')}`;
+}
+
+function switchAuthTab(tab){
+  document.getElementById('auth-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'block':'none';
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-pw').value;
+  const err=document.getElementById('login-err');
+  err.style.display='none';
+  const {error}=await sb.auth.signInWithPassword({email,password:pw});
+  if(error){err.textContent=error.message==='Invalid login credentials'?'Email ou mot de passe incorrect.':error.message;err.style.display='block';return;}
+  renderAcctPanel();
+}
+
+async function doRegister(){
+  const prenom=document.getElementById('reg-prenom').value.trim();
+  const nom=document.getElementById('reg-nom').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pw=document.getElementById('reg-pw').value;
+  const err=document.getElementById('reg-err');
+  const ok=document.getElementById('reg-ok');
+  err.style.display='none';ok.style.display='none';
+  if(!email||!pw){err.textContent='Email et mot de passe requis.';err.style.display='block';return;}
+  const {error}=await sb.auth.signUp({email,password:pw,options:{data:{prenom,nom}}});
+  if(error){err.textContent=error.message;err.style.display='block';return;}
+  ok.textContent='Compte créé ! Vérifiez votre email pour confirmer.';ok.style.display='block';
+}
+
+async function doForgot(){
+  const email=document.getElementById('login-email').value.trim();
+  if(!email){alert('Entrez votre email d\'abord.');return;}
+  await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+  alert('Email de réinitialisation envoyé à '+email);
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;
+  renderAcctPanel();
+  updateNavIcon();
+}
+
+// ── PANELS ──
+function openCart(){document.getElementById('cart-panel').classList.add('open');document.getElementById('acct-panel').classList.remove('open');document.getElementById('backdrop').classList.add('open');}
+function closeCart(){document.getElementById('cart-panel').classList.remove('open');document.getElementById('backdrop').classList.remove('open');}
+function openAcct(){document.getElementById('acct-panel').classList.add('open');document.getElementById('cart-panel').classList.remove('open');document.getElementById('backdrop').classList.add('open');renderAcctPanel();}
+function closeAcct(){document.getElementById('acct-panel').classList.remove('open');document.getElementById('backdrop').classList.remove('open');}
+
+document.getElementById('cart-btn').addEventListener('click',()=>document.getElementById('cart-panel').classList.contains('open')?closeCart():openCart());
+document.getElementById('cart-x').addEventListener('click',closeCart);
+document.getElementById('acct-btn').addEventListener('click',()=>document.getElementById('acct-panel').classList.contains('open')?closeAcct():openAcct());
+document.getElementById('acct-x').addEventListener('click',closeAcct);
+document.getElementById('backdrop').addEventListener('click',()=>{closeCart();closeAcct();});
+
+// ── ARCHIVES ──
+async function renderArchives(){
+  const {data}=await sb.from('watches').select('*').eq('status','sold').order('sold_at',{ascending:false});
+  const sold=data||[];
+  const container=document.getElementById('archives-list');
+  if(!sold.length){container.innerHTML='<div class="loading">Aucun drop archivé</div>';return;}
+  const groups={};
+  sold.forEach(w=>{
+    const key=w.sold_at?new Date(w.sold_at).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'Récent';
+    if(!groups[key])groups[key]=[];
+    groups[key].push(w);
+  });
+  container.innerHTML=Object.entries(groups).map(([date,ws])=>`
+    <div class="archive-block">
+      <div class="archive-head"><span class="archive-date">${date.charAt(0).toUpperCase()+date.slice(1)}</span><span class="archive-count">${ws.length} montre${ws.length>1?'s':''} · Tout vendu</span></div>
+      <div class="archive-items">${ws.map(w=>`${w.brand} ${w.model}${w.year?' ('+w.year+')':''}`).join(' · ')}</div>
+    </div>`).join('');
+}
+
+// ── LEGAL ──
+const LEGAL={
+  mentions:`<h2 class="legal-h2">Mentions légales</h2><div class="legal-note"><strong>Note :</strong> Mises à jour lors du passage en auto-entrepreneur.</div><div class="legal-h3">Éditeur</div><p>Particulier domicilié à Bordeaux, France.<br>Email : <a href="mailto:contact@thedialfind.fr" style="color:var(--black)">contact@thedialfind.fr</a></p><div class="legal-h3">Hébergement</div><p>Netlify, Inc. — San Francisco, CA, États-Unis.</p><div class="legal-h3">Médiation</div><p><a href="https://ec.europa.eu/consumers/odr" target="_blank" style="color:var(--black)">ec.europa.eu/consumers/odr</a></p>`,
+  cgv:`<h2 class="legal-h2">Conditions générales de vente</h2><div class="legal-note"><strong>Note :</strong> Mises à jour lors du passage en auto-entrepreneur.</div><div class="legal-h3">Produits</div><p>Articles d'occasion décrits honnêtement avec note et description détaillée.</p><div class="legal-h3">Prix</div><p>Prix en euros TTC. Livraison gratuite sans minimum d'achat.</p><div class="legal-h3">Droit de rétractation</div><p>14 jours à compter de la réception (article L221-18 du Code de la consommation). Frais de retour à la charge de l'acheteur.</p>`,
+  confidentialite:`<h2 class="legal-h2">Politique de confidentialité</h2><div class="legal-h3">Données collectées</div><p>Nom, email, adresse de livraison lors d'une commande. Aucune donnée bancaire stockée.</p><div class="legal-h3">Vos droits</div><p><a href="mailto:contact@thedialfind.fr" style="color:var(--black)">contact@thedialfind.fr</a> — <a href="https://www.cnil.fr" target="_blank" style="color:var(--black)">cnil.fr</a></p>`,
+  retour:`<h2 class="legal-h2">Politique de retour</h2><div class="legal-h3">Délai</div><p>14 jours à compter de la réception, sans justification.</p><div class="legal-h3">Procédure</div><p>Email à <a href="mailto:contact@thedialfind.fr" style="color:var(--black)">contact@thedialfind.fr</a>. Remboursement sous 14 jours après réception.</p>`,
+  cookies:`<h2 class="legal-h2">Cookies</h2><div class="legal-h3">Cookies nécessaires</div><p>Session uniquement. Aucun tracking publicitaire.</p>`
+};
+function openLegal(p){document.getElementById('legal-content').innerHTML=LEGAL[p]||'';document.getElementById('legal-ov').style.display='block';document.body.style.overflow='hidden';}
+function closeLegal(){document.getElementById('legal-ov').style.display='none';document.body.style.overflow='';}
+document.getElementById('legal-ov').addEventListener('click',function(e){if(e.target===this)closeLegal();});
+
+// ── INIT ──
+function showSection(name) {
+  const pages = ['drop','archives','about','rachat','recherche','contact'];
+  pages.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = p === name ? 'block' : 'none';
+  });
+  // Update active nav link
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('onclick') && a.getAttribute('onclick').includes("'"+name+"'")) {
+      a.classList.add('active');
+    }
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function submitRachat() {
+  const prenom=document.getElementById('r-prenom').value.trim();
+  const email=document.getElementById('r-email').value.trim();
+  const marque=document.getElementById('r-marque').value.trim();
+  if(!prenom||!email||!marque){alert('Merci de remplir les champs obligatoires.');return;}
+  await sb.from('requests').insert({
+    type:'rachat', prenom, email, marque,
+    modele:document.getElementById('r-modele').value,
+    annee:document.getElementById('r-annee').value,
+    prix:document.getElementById('r-prix').value,
+    description:document.getElementById('r-desc').value,
+    created_at:new Date().toISOString()
+  }).catch(()=>{});
+  const msg=document.getElementById('rachat-msg');
+  msg.textContent='✓ Votre montre a bien été soumise. On vous répond sous 48h !';
+  msg.style.display='block';
+  ['r-prenom','r-email','r-marque','r-modele','r-annee','r-prix','r-desc'].forEach(id=>document.getElementById(id).value='');
+}
+
+async function submitRecherche() {
+  const prenom=document.getElementById('s-prenom').value.trim();
+  const email=document.getElementById('s-email').value.trim();
+  const marque=document.getElementById('s-marque').value.trim();
+  if(!prenom||!email||!marque){alert('Merci de remplir les champs obligatoires.');return;}
+  await sb.from('requests').insert({
+    type:'recherche', prenom, email, marque,
+    modele:document.getElementById('s-modele').value,
+    periode:document.getElementById('s-periode').value,
+    budget:document.getElementById('s-budget').value,
+    description:document.getElementById('s-note').value,
+    created_at:new Date().toISOString()
+  }).catch(()=>{});
+  const msg=document.getElementById('recherche-msg');
+  msg.textContent='✓ Votre recherche est enregistrée. On vous contacte dès que possible !';
+  msg.style.display='block';
+  ['s-prenom','s-email','s-marque','s-modele','s-periode','s-budget','s-note'].forEach(id=>document.getElementById(id).value='');
+}
+
+async function submitContact() {
+  const prenom=document.getElementById('c-prenom').value.trim();
+  const email=document.getElementById('c-email').value.trim();
+  const sujet=document.getElementById('c-sujet').value.trim();
+  const message=document.getElementById('c-message').value.trim();
+  if(!prenom||!email||!sujet||!message){alert('Merci de remplir tous les champs.');return;}
+  await sb.from('requests').insert({
+    type:'contact', prenom, email,
+    modele:sujet,
+    description:message,
+    created_at:new Date().toISOString()
+  }).catch(()=>{});
+  const msg=document.getElementById('contact-msg');
+  msg.textContent='✓ Message envoyé. On vous répond sous 24h !';
+  msg.style.display='block';
+  ['c-prenom','c-email','c-sujet','c-message'].forEach(id=>document.getElementById(id).value='');
+}
+
+async function init(){
+  await initSplash();
+  const {data}=await sb.from('watches').select('*').order('created_at',{ascending:false});
+  WATCHES=data||[];
+  renderGrid('all');
+  renderArchives();
+  const {data:{session}}=await sb.auth.getSession();
+  currentUser=session?.user||null;
+  updateNavIcon();
+
+  // Handle Stripe return
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('paiement')==='ok'){
+    const ref=params.get('ref')||'';
+    // Update order status in Supabase
+    if(ref) await sb.from('orders').update({status:'payee'}).eq('ref',ref).catch(()=>{});
+    clearCart();
+    // Show success message
+    setTimeout(()=>{
+      openAcct();
+    },500);
+    window.history.replaceState({},document.title,window.location.pathname);
+  } else if(params.get('paiement')==='annule'){
+    window.history.replaceState({},document.title,window.location.pathname);
+  }
+}
+init();
+</script>
+</body>
+</html>
