@@ -65,7 +65,7 @@ body { background: var(--white); color: var(--black); font-family: var(--body); 
 .filter-btn { font-family: var(--body); font-size: 11px; font-weight: 300; padding: 6px 16px; border: 0.5px solid var(--gray-mid); background: none; cursor: pointer; letter-spacing: 0.06em; color: var(--gray-dark); transition: all 0.15s; }
 .filter-btn.active { border-color: var(--black); color: var(--black); }
 
-.watches-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 1px; background: var(--gray-mid); }
+.watches-grid { display: grid; grid-template-columns: repeat(4, 260px); gap: 1px; background: var(--gray-mid); justify-content: start; }
 .watch-card { background: var(--white); cursor: pointer; transition: background 0.12s; animation: fadeUp 0.3s ease both; }
 .watch-card:hover { background: var(--gray-light); }
 .watch-card.sold { cursor: default; }
