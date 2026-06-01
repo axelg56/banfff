@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dial Find — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --black:#0e0e0e;--white:#fafaf8;--gray-light:#f4f4f2;--gray-mid:#e8e8e4;
+  --gray-muted:#b0b0a8;--gray-dark:#6a6a62;
+  --green:#2d6a4f;--green-light:#edf6f1;--red:#9b2226;--red-light:#fdf0f0;
+  --amber:#8a5c00;--amber-light:#fdf6e3;
+  --body:'Oswald',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--gray-light);color:var(--black);font-family:var(--body);font-size:14px;font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--white)}
+.login-box{width:320px}
+.login-logo{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px}
+.login-sub{font-size:12px;color:var(--gray-muted);letter-spacing:0.06em;margin-bottom:32px}
+.field-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark);margin-bottom:6px;display:block}
+.field{width:100%;padding:10px 12px;border:0.5px solid var(--gray-mid);background:none;font-family:var(--body);font-size:14px;font-weight:300;color:var(--black);outline:none;margin-bottom:12px;transition:border-color 0.15s;-webkit-appearance:none}
+.field:focus{border-color:var(--black)}
+.field::placeholder{color:var(--gray-muted)}
+.field option{font-family:var(--body)}
+.btn{font-family:var(--body);font-size:11px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;padding:11px 24px;border:none;cursor:pointer;transition:background 0.15s}
+.btn-primary{background:var(--black);color:var(--white)}
+.btn-primary:hover{background:#2a2a2a}
+.btn-secondary{background:none;color:var(--gray-dark);border:0.5px solid var(--gray-mid)}
+.btn-secondary:hover{border-color:var(--black);color:var(--black)}
+.btn-danger{background:none;color:var(--red);border:0.5px solid #e8c8c8}
+.btn-danger:hover{background:var(--red-light)}
+.btn-green{background:var(--green);color:var(--white)}
+.btn-green:hover{background:#245a42}
+.btn-full{width:100%}
+.login-error{font-size:12px;color:var(--red);margin-top:8px;display:none}
+
+#app{display:none;min-height:100vh}
+#topbar{background:var(--white);border-bottom:0.5px solid var(--gray-mid);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;position:sticky;top:0;z-index:50}
+.topbar-logo{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.1em;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-label{font-size:11px;color:var(--gray-muted);letter-spacing:0.06em}
+.topbar-link{font-size:11px;color:var(--gray-dark);cursor:pointer;letter-spacing:0.06em;text-decoration:none;border-bottom:0.5px solid transparent;transition:border-color 0.15s}
+.topbar-link:hover{border-color:var(--gray-dark)}
+
+.main-layout{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 56px)}
+#sidebar{background:var(--white);border-right:0.5px solid var(--gray-mid);padding:24px 0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
+.nav-section{margin-bottom:8px}
+.nav-section-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-muted);padding:8px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--gray-dark);border-left:2px solid transparent;transition:all 0.12s}
+.nav-item:hover{background:var(--gray-light);color:var(--black)}
+.nav-item.active{background:var(--gray-light);color:var(--black);border-left-color:var(--black);font-weight:400}
+
+#content{padding:32px;overflow-y:auto}
+.page{display:none}
+.page.active{display:block}
+
+.page-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:28px}
+.page-title{font-family:'Oswald',sans-serif;font-size:24px;font-weight:400}
+.page-sub{font-size:12px;color:var(--gray-muted);margin-top:2px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:32px}
+.stat-card{background:var(--white);border:0.5px solid var(--gray-mid);padding:16px 20px}
+.stat-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:8px}
+.stat-val{font-family:'Oswald',sans-serif;font-size:28px;font-weight:600;line-height:1}
+.stat-sub{font-size:11px;color:var(--gray-muted);margin-top:4px}
+.stat-green .stat-val{color:var(--green)}
+.stat-amber .stat-val{color:var(--amber)}
+
+.table-wrap{background:var(--white);border:0.5px solid var(--gray-mid);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-muted);font-weight:400;padding:10px 16px;text-align:left;border-bottom:0.5px solid var(--gray-mid);background:var(--gray-light);white-space:nowrap}
+td{padding:12px 16px;border-bottom:0.5px solid var(--gray-mid);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray-light)}
+.badge{font-size:10px;padding:3px 10px;letter-spacing:0.06em;display:inline-block}
+.badge-dispo{background:var(--green-light);color:var(--green);border:0.5px solid #b7dfc9}
+.badge-sold{background:#f4f4f2;color:var(--gray-muted);border:0.5px solid var(--gray-mid)}
+.badge-drop{background:var(--black);color:var(--white)}
+.badge-planned{background:var(--amber-light);color:var(--amber);border:0.5px solid #f0d898}
+.marge-pos{color:var(--green);font-weight:400}
+.marge-neg{color:var(--red)}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.form-full{grid-column:1/-1}
+.form-group label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark);margin-bottom:6px;display:block}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:0.5px solid var(--gray-mid);background:none;font-family:var(--body);font-size:13px;font-weight:300;color:var(--black);outline:none;transition:border-color 0.15s;-webkit-appearance:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--black)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-group select{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23b0b0a8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.form-panel{background:var(--white);border:0.5px solid var(--gray-mid);padding:24px;margin-bottom:20px}
+.form-panel-title{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-dark);margin-bottom:18px}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:8px}
+.marge-preview{background:var(--gray-light);border:0.5px solid var(--gray-mid);padding:12px 16px;display:flex;gap:24px;align-items:center;margin-top:12px}
+.marge-item{text-align:center}
+.marge-item-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:3px}
+.marge-item-val{font-family:'Oswald',sans-serif;font-size:18px}
+
+.drop-card{background:var(--white);border:0.5px solid var(--gray-mid);padding:20px 24px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.drop-card-title{font-family:'Oswald',sans-serif;font-size:16px;margin-bottom:4px}
+.drop-card-meta{font-size:12px;color:var(--gray-muted)}
+.drop-card-actions{display:flex;gap:8px;align-items:center}
+
+.email-list{background:var(--white);border:0.5px solid var(--gray-mid)}
+.email-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:0.5px solid var(--gray-mid)}
+.email-item:last-child{border-bottom:none}
+
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(14,14,14,0.45);z-index:100;align-items:center;justify-content:center;padding:40px 20px}
+#modal-bg.open{display:flex}
+#modal-box{background:var(--white);width:100%;max-width:520px;max-height:80vh;overflow-y:auto;padding:28px 32px;position:relative;animation:slideUp 0.2s ease}
+@keyframes slideUp{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.modal-title-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.modal-h{font-family:'Oswald',sans-serif;font-size:18px;font-weight:400}
+.modal-x{background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-muted);line-height:1}
+
+#toast{position:fixed;bottom:24px;right:24px;background:var(--black);color:var(--white);padding:12px 20px;font-size:13px;letter-spacing:0.04em;z-index:200;opacity:0;transform:translateY(8px);transition:all 0.2s;pointer-events:none}
+#toast.show{opacity:1;transform:none}
+
+.photo-upload-area{border:0.5px dashed var(--gray-mid);padding:20px;text-align:center;cursor:pointer;transition:border-color 0.15s}
+.photo-upload-area:hover{border-color:var(--black)}
+.photo-previews{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.photo-preview{width:64px;height:64px;object-fit:cover;border:0.5px solid var(--gray-mid)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--gray-mid);border-top-color:var(--black);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">The Dial Find</div>
+    <div class="login-sub">Administration</div>
+    <label class="field-label">Mot de passe</label>
+    <input class="field" type="password" id="pw-input" placeholder="••••••••">
+    <button class="btn btn-primary btn-full" onclick="tryLogin()">Accéder</button>
+    <div class="login-error" id="login-error">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="topbar-logo">The Dial Find</span>
+      <span style="color:var(--gray-mid);font-size:12px">/</span>
+      <span class="topbar-label">Admin</span>
+    </div>
+    <div class="topbar-right">
+      <a href="thedialfind.html" target="_blank" class="topbar-link">Voir le site →</a>
+      <span class="topbar-link" onclick="logout()">Déconnexion</span>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div id="sidebar">
+      <div class="nav-section">
+        <div class="nav-section-label">Vue d'ensemble</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Tableau de bord
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Catalogue</div>
+        <div class="nav-item" onclick="showPage('watches',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><polyline points="12 8 12 12 14 14"/></svg>
+          Montres
+        </div>
+        <div class="nav-item" onclick="showPage('add-watch',this);resetForm()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter une montre
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Drops</div>
+        <div class="nav-item" onclick="showPage('drops',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Planifier un drop
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Ventes</div>
+        <div class="nav-item" onclick="showPage('sales',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Suivi des ventes
+        </div>
+        <div class="nav-item" onclick="exportCSV()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Clients</div>
+        <div class="nav-item" onclick="showPage('orders',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+          Commandes
+        </div>
+        <div class="nav-item" onclick="showPage('emails',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Emails drop
+        </div>
+      </div>
+    </div>
+
+    <div id="content">
+      <div class="page active" id="page-dashboard">
+        <div class="page-header"><div><div class="page-title">Tableau de bord</div><div class="page-sub" id="dash-date"></div></div></div>
+        <div class="stats-grid" id="stats-grid"><div style="font-size:12px;color:var(--gray-muted)"><span class="spinner"></span>Chargement...</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div><div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:12px">Dernières ventes</div><div class="table-wrap" id="recent-sales"></div></div>
+          <div><div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:12px">Stock actuel</div><div class="table-wrap" id="current-stock"></div></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-watches">
+        <div class="page-header">
+          <div><div class="page-title">Montres</div><div class="page-sub" id="watches-count"></div></div>
+          <button class="btn btn-primary" onclick="showPage('add-watch',null);resetForm()">+ Ajouter</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Montre</th><th>Année</th><th>Achat</th><th>Vente</th><th>Marge</th><th>Source</th><th>État</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="watches-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="page" id="page-add-watch">
+        <div class="page-header">
+          <div><div class="page-title" id="add-watch-title">Ajouter une montre</div></div>
+          <button class="btn btn-secondary" onclick="showPage('watches',null);loadWatchesPage()">← Retour</button>
+        </div>
+        <form onsubmit="saveWatch(event)">
+          <div class="form-panel">
+            <div class="form-panel-title">Informations</div>
+            <div class="form-grid">
+              <div class="form-group"><label>Marque *</label><input class="field" type="text" id="f-brand" required placeholder="Seiko, Tissot, Omega..."></div>
+              <div class="form-group"><label>Modèle *</label><input class="field" type="text" id="f-model" required placeholder="5 Automatic, Seastar..."></div>
+              <div class="form-group"><label>Année</label><input class="field" type="text" id="f-year" placeholder="1974"></div>
+              <div class="form-group"><label>Calibre</label><input class="field" type="text" id="f-calibre" placeholder="ETA 2824..."></div>
+              <div class="form-group"><label>Boîtier</label><input class="field" type="text" id="f-boitier" placeholder="36mm acier"></div>
+              <div class="form-group"><label>Bracelet</label><input class="field" type="text" id="f-bracelet" placeholder="Cuir brun, acier..."></div>
+              <div class="form-group"><label>Note état (1–10) *</label><input class="field" type="number" id="f-note" required min="1" max="10" placeholder="8"></div>
+              <div class="form-group"><label>Statut</label>
+                <select class="field" id="f-status"><option value="dispo">Disponible</option><option value="drop">Dans un drop</option><option value="sold">Vendu</option></select>
+              </div>
+              <div class="form-group form-full"><label>Description</label><textarea class="field" id="f-desc" rows="3" placeholder="Histoire, particularités..."></textarea></div>
+            </div>
+          </div>
+          <div class="form-panel">
+            <div class="form-panel-title">Prix & achat</div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Prix d'achat (EUR) *</label><input class="field" type="number" id="f-buy" required min="0" placeholder="45" oninput="updateMarge()"></div>
+              <div class="form-group"><label>Prix de vente (EUR) *</label><input class="field" type="number" id="f-sell" required min="0" placeholder="185" oninput="updateMarge()"></div>
+              <div class="form-group"><label>Lieu d'achat</label>
+                <select class="field" id="f-source">
+                  <option value="">— Sélectionner —</option>
+                  <option>Brocante</option><option>Vide-grenier</option><option>Vinted</option>
+                  <option>Leboncoin</option><option>eBay</option><option>Marché aux puces</option>
+                  <option>Particulier</option><option>Autre</option>
+                </select>
+              </div>
+            </div>
+            <div class="marge-preview" id="marge-preview" style="display:none">
+              <div class="marge-item"><div class="marge-item-label">Achat</div><div class="marge-item-val" id="mp-buy">—</div></div>
+              <div style="color:var(--gray-mid);font-size:18px">→</div>
+              <div class="marge-item"><div class="marge-item-label">Vente</div><div class="marge-item-val" id="mp-sell">—</div></div>
+              <div style="color:var(--gray-mid);font-size:18px">=</div>
+              <div class="marge-item"><div class="marge-item-label">Marge</div><div class="marge-item-val" id="mp-marge">—</div></div>
+              <div class="marge-item"><div class="marge-item-label">%</div><div class="marge-item-val" id="mp-pct">—</div></div>
+            </div>
+          </div>
+          <div class="form-panel">
+            <div class="form-panel-title">Photos</div>
+            <div class="photo-upload-area" onclick="document.getElementById('photo-input').click()">
+              <div style="font-size:12px;color:var(--gray-muted)">Cliquer pour ajouter des photos (JPEG, PNG)</div>
+            </div>
+            <input type="file" id="photo-input" multiple accept="image/*" style="display:none" onchange="previewPhotos(this)">
+            <div class="photo-previews" id="photo-previews"></div>
+            <div id="photo-urls-stored" style="display:none"></div>
+          </div>
+          <input type="hidden" id="f-edit-id" value="">
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">Réinitialiser</button>
+            <button type="submit" class="btn btn-primary" id="save-btn">Enregistrer</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="page" id="page-drops">
+        <div class="page-header"><div><div class="page-title">Planifier un drop</div><div class="page-sub">Le site bascule automatiquement à la date prévue</div></div></div>
+        <div class="form-panel" style="max-width:560px;margin-bottom:28px">
+          <div class="form-panel-title">Nouveau drop</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Date et heure de lancement</label><input class="field" type="datetime-local" id="drop-date"></div>
+            <div class="form-group"><label>Message d'annonce</label><input class="field" type="text" id="drop-msg" placeholder="Prochain drop samedi 14h — 6 montres vintage"></div>
+          </div>
+          <div style="margin-top:16px;padding:14px 16px;border:0.5px solid var(--gray-mid);background:var(--white);display:flex;align-items:flex-start;gap:12px">
+            <input type="checkbox" id="site-closed" style="width:14px;height:14px;margin-top:2px;flex-shrink:0" onchange="toggleSiteClosed()">
+            <div>
+              <div style="font-size:13px;font-weight:400;margin-bottom:4px">Fermer l'accès au site</div>
+              <div style="font-size:11px;color:var(--gray-muted);line-height:1.6">Quand cette case est cochée, le site affiche uniquement le logo et "Prochainement" — sans compte à rebours. Décochez quand un drop est planifié.</div>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:10px">Montres à inclure</div>
+            <div id="drop-watch-select" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-primary" onclick="saveDrop()">Planifier ce drop</button></div>
+        </div>
+        <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-muted);margin-bottom:12px">Drops planifiés</div>
+        <div id="drops-list"></div>
+      </div>
+
+      <div class="page" id="page-sales">
+        <div class="page-header">
+          <div><div class="page-title">Suivi des ventes</div></div>
+          <button class="btn btn-secondary" onclick="exportCSV()">↓ Export CSV</button>
+        </div>
+        <div class="stats-grid" id="sales-stats"></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Date</th><th>Montre</th><th>Achat</th><th>Vente</th><th>Marge</th><th>%</th><th>Transporteur</th><th>Suivi</th><th>Actions</th></tr></thead>
+          <tbody id="sales-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="page" id="page-orders">
+        <div class="page-header">
+          <div><div class="page-title">Commandes</div><div class="page-sub" id="orders-count"></div></div>
+          <button class="btn btn-secondary" onclick="exportOrdersCSV()">↓ Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Ref</th><th>Date</th><th>Client</th><th>Articles</th><th>Total</th><th>Transporteur</th><th>Statut</th><th>Suivi</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page" id="page-emails">
+        <div class="page-header">
+          <div><div class="page-title">Emails drop</div><div class="page-sub" id="emails-count"></div></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="exportEmails()">↓ Export</button>
+            <button class="btn btn-primary" onclick="openAddEmail()">+ Ajouter</button>
+          </div>
+        </div>
+        <div style="background:var(--amber-light);border:0.5px solid #f0d898;padding:12px 16px;font-size:12px;color:var(--amber);margin-bottom:20px;line-height:1.6">
+          Emails collectés avec consentement explicite. Copie-les pour un envoi via Brevo ou Mailchimp.
+        </div>
+        <div class="email-list" id="email-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-bg">
+  <div id="modal-box">
+    <div class="modal-title-bar"><div class="modal-h" id="modal-title"></div><button class="modal-x" onclick="closeModal()">✕</button></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const ADMIN_PASSWORD = 'thedialfind2025';
+const SUPA_URL = 'https://kqxxxfhmurghugzzccuq.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxeHh4ZmhtdXJnaHVnenpjY3VxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODE4MjksImV4cCI6MjA5NTg1NzgyOX0.J7Tk8sjxeWQ2M3eWGVjaE3mKULgAgz-0eg2xZ9-yd7k';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let editingId = null;
+let allWatches = [];
+let photoDataUrls = [];
+
+// ── AUTH ──
+function tryLogin() {
+  if (document.getElementById('pw-input').value === ADMIN_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initDashboard();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+  }
+}
+function logout() { document.getElementById('app').style.display='none'; document.getElementById('login-screen').style.display='flex'; }
+document.getElementById('pw-input').addEventListener('keydown', e => { if(e.key==='Enter') tryLogin(); });
+
+// ── NAV ──
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  if (id==='dashboard') initDashboard();
+  if (id==='watches') loadWatchesPage();
+  if (id==='sales') loadSalesPage();
+  if (id==='drops') loadDropsPage();
+  if (id==='orders') loadOrdersPage();
+  if (id==='emails') loadEmailsPage();
+}
+
+// ── DASHBOARD ──
+async function initDashboard() {
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const { data: watches } = await sb.from('watches').select('*');
+  if (!watches) return;
+  allWatches = watches;
+  const sold = watches.filter(w=>w.status==='sold');
+  const dispo = watches.filter(w=>w.status==='dispo'||w.status==='drop');
+  const totalCA = sold.reduce((s,w)=>s+(w.sell||0),0);
+  const totalBuy = sold.reduce((s,w)=>s+(w.buy||0),0);
+  const totalMarge = totalCA - totalBuy;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card stat-green"><div class="stat-label">Chiffre d'affaires</div><div class="stat-val">${totalCA} EUR</div><div class="stat-sub">${sold.length} vendue${sold.length>1?'s':''}</div></div>
+    <div class="stat-card stat-green"><div class="stat-label">Bénéfice net</div><div class="stat-val">${totalMarge} EUR</div><div class="stat-sub">Marge moy. ${totalCA?Math.round((totalMarge/totalCA)*100):0}%</div></div>
+    <div class="stat-card"><div class="stat-label">Stock</div><div class="stat-val">${dispo.length}</div><div class="stat-sub">Achat : ${dispo.reduce((s,w)=>s+(w.buy||0),0)} EUR</div></div>
+    <div class="stat-card stat-amber"><div class="stat-label">Valeur stock estimée</div><div class="stat-val">${dispo.reduce((s,w)=>s+(w.sell||0),0)} EUR</div><div class="stat-sub">Si tout vendu</div></div>`;
+  const recent = [...sold].sort((a,b)=>new Date(b.sold_at||0)-new Date(a.sold_at||0)).slice(0,5);
+  document.getElementById('recent-sales').innerHTML = recent.length
+    ? `<table><tbody>${recent.map(w=>`<tr><td>${w.brand} ${w.model}</td><td class="marge-pos">+${(w.sell||0)-(w.buy||0)} EUR</td></tr>`).join('')}</tbody></table>`
+    : '<div style="padding:20px;text-align:center;font-size:12px;color:var(--gray-muted)">Aucune vente</div>';
+  document.getElementById('current-stock').innerHTML = dispo.length
+    ? `<table><tbody>${dispo.slice(0,6).map(w=>`<tr><td>${w.brand} ${w.model}</td><td><span class="badge badge-${w.status}">${w.status==='drop'?'Drop':'Dispo'}</span></td></tr>`).join('')}</tbody></table>`
+    : '<div style="padding:20px;text-align:center;font-size:12px;color:var(--gray-muted)">Stock vide</div>';
+}
+
+// ── WATCHES ──
+async function loadWatchesPage() {
+  const { data } = await sb.from('watches').select('*').order('created_at',{ascending:false});
+  allWatches = data || [];
+  document.getElementById('watches-count').textContent = `${allWatches.length} montre${allWatches.length>1?'s':''}`;
+  const tbody = document.getElementById('watches-tbody');
+  tbody.innerHTML = allWatches.map(w => {
+    const m = (w.sell||0)-(w.buy||0), pct = w.sell ? Math.round((m/w.sell)*100):0;
+    return `<tr>
+      <td><strong style="font-weight:500">${w.brand}</strong> ${w.model}</td>
+      <td>${w.year||'—'}</td><td>${w.buy||0} EUR</td><td>${w.sell||0} EUR</td>
+      <td class="${m>=0?'marge-pos':'marge-neg'}">${m>=0?'+':''}${m} EUR <span style="font-size:11px;color:var(--gray-muted)">(${pct}%)</span></td>
+      <td>${w.source||'—'}</td><td>${w.note||'—'}/10</td>
+      <td><span class="badge badge-${w.status}">${w.status==='dispo'?'Dispo':w.status==='sold'?'Vendu':'Drop'}</span></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-secondary" style="padding:5px 12px;font-size:10px" onclick="editWatch(${w.id})">Modifier</button>
+        ${w.status!=='sold'?`<button class="btn btn-green" style="padding:5px 12px;font-size:10px" onclick="openSellModal(${w.id})">Vendu</button>`:''}
+        <button class="btn btn-danger" style="padding:5px 12px;font-size:10px" onclick="deleteWatch(${w.id})">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveWatch(e) {
+  e.preventDefault();
+  const btn = document.getElementById('save-btn');
+  btn.innerHTML = '<span class="spinner"></span>Enregistrement...';
+  btn.disabled = true;
+  const w = {
+    brand: document.getElementById('f-brand').value,
+    model: document.getElementById('f-model').value,
+    year: document.getElementById('f-year').value,
+    calibre: document.getElementById('f-calibre').value,
+    boitier: document.getElementById('f-boitier').value,
+    bracelet: document.getElementById('f-bracelet').value,
+    note: parseInt(document.getElementById('f-note').value),
+    status: document.getElementById('f-status').value,
+    description: document.getElementById('f-desc').value,
+    buy: parseInt(document.getElementById('f-buy').value),
+    sell: parseInt(document.getElementById('f-sell').value),
+    source: document.getElementById('f-source').value,
+    photos: photoDataUrls.length ? photoDataUrls : [],
+  };
+  let err;
+  if (editingId) {
+    const res = await sb.from('watches').update(w).eq('id', editingId);
+    err = res.error;
+  } else {
+    const res = await sb.from('watches').insert(w);
+    err = res.error;
+  }
+  btn.innerHTML = 'Enregistrer';
+  btn.disabled = false;
+  if (err) { toast('Erreur : ' + err.message); return; }
+  toast(editingId ? 'Montre mise à jour' : 'Montre ajoutée');
+  editingId = null;
+  showPage('watches', null);
+  loadWatchesPage();
+}
+
+async function editWatch(id) {
+  const w = allWatches.find(x=>x.id===id);
+  if (!w) return;
+  editingId = id;
+  document.getElementById('add-watch-title').textContent = 'Modifier la montre';
+  document.getElementById('f-brand').value = w.brand||'';
+  document.getElementById('f-model').value = w.model||'';
+  document.getElementById('f-year').value = w.year||'';
+  document.getElementById('f-calibre').value = w.calibre||'';
+  document.getElementById('f-boitier').value = w.boitier||'';
+  document.getElementById('f-bracelet').value = w.bracelet||'';
+  document.getElementById('f-note').value = w.note||'';
+  document.getElementById('f-status').value = w.status||'dispo';
+  document.getElementById('f-desc').value = w.description||'';
+  document.getElementById('f-buy').value = w.buy||'';
+  document.getElementById('f-sell').value = w.sell||'';
+  document.getElementById('f-source').value = w.source||'';
+  photoDataUrls = w.photos||[];
+  updateMarge();
+  showPage('add-watch', null);
+}
+
+async function deleteWatch(id) {
+  if (!confirm('Supprimer cette montre ?')) return;
+  await sb.from('watches').delete().eq('id',id);
+  toast('Montre supprimée');
+  loadWatchesPage();
+}
+
+function resetForm() {
+  editingId = null; photoDataUrls = [];
+  ['f-brand','f-model','f-year','f-calibre','f-boitier','f-bracelet','f-note','f-desc','f-buy','f-sell'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('f-status').value='dispo';
+  document.getElementById('f-source').value='';
+  document.getElementById('marge-preview').style.display='none';
+  document.getElementById('photo-previews').innerHTML='';
+  document.getElementById('add-watch-title').textContent='Ajouter une montre';
+}
+
+function updateMarge() {
+  const buy=parseInt(document.getElementById('f-buy').value)||0;
+  const sell=parseInt(document.getElementById('f-sell').value)||0;
+  if(!buy&&!sell){document.getElementById('marge-preview').style.display='none';return;}
+  const m=sell-buy, pct=sell?Math.round((m/sell)*100):0;
+  document.getElementById('marge-preview').style.display='flex';
+  document.getElementById('mp-buy').textContent=buy+' EUR';
+  document.getElementById('mp-sell').textContent=sell+' EUR';
+  document.getElementById('mp-marge').textContent=(m>=0?'+':'')+m+' EUR';
+  document.getElementById('mp-marge').style.color=m>=0?'var(--green)':'var(--red)';
+  document.getElementById('mp-pct').textContent=pct+'%';
+}
+
+function previewPhotos(input) {
+  const container=document.getElementById('photo-previews');
+  container.innerHTML=''; photoDataUrls=[];
+  Array.from(input.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      photoDataUrls.push(e.target.result);
+      const img=document.createElement('img');
+      img.src=e.target.result; img.className='photo-preview';
+      container.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── SELL MODAL ──
+function openSellModal(id) {
+  const w = allWatches.find(x=>x.id===id);
+  openModal('Marquer comme vendu',`
+    <div style="font-size:14px;margin-bottom:20px"><em>${w.brand} ${w.model}</em> — ${w.sell} EUR</div>
+    <div class="form-group" style="margin-bottom:12px"><label>Transporteur</label>
+      <select class="field" id="sell-carrier">
+        <option value="colissimo">Colissimo (La Poste)</option>
+        <option value="mondialrelay">Mondial Relay</option>
+        <option value="chronopost">Chronopost</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>Numéro de suivi</label><input class="field" type="text" id="sell-tracking" placeholder="6X12345678901"></div>
+    <div class="form-group" style="margin-bottom:20px"><label>Date de vente</label><input class="field" type="date" id="sell-date" value="${new Date().toISOString().split('T')[0]}"></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-green" onclick="confirmSell(${id})">Confirmer</button>
+    </div>`);
+}
+
+async function confirmSell(id) {
+  const carrier=document.getElementById('sell-carrier').value;
+  const tracking=document.getElementById('sell-tracking').value;
+  const sold_at=document.getElementById('sell-date').value;
+  await sb.from('watches').update({status:'sold',carrier,tracking,sold_at}).eq('id',id);
+  closeModal(); toast('Vente enregistrée');
+  loadWatchesPage();
+}
+
+// ── DROPS ──
+async function loadDropsPage() {
+  const { data: watches } = await sb.from('watches').select('*');
+  const { data: drops } = await sb.from('drops').select('*').order('created_at',{ascending:false});
+  const { data: settingsArr } = await sb.from('settings').select('*').eq('key','site_closed');
+  const settings = settingsArr&&settingsArr.length?settingsArr[0]:null;
+  if(settings && settings.value === 'true') {
+    document.getElementById('site-closed').checked = true;
+  }
+  allWatches = watches||[];
+  const dispo = allWatches.filter(w=>w.status==='dispo'||w.status==='drop');
+  document.getElementById('drop-watch-select').innerHTML = dispo.map(w=>`
+    <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:8px 12px;border:0.5px solid var(--gray-mid);background:var(--white)">
+      <input type="checkbox" id="drop-w-${w.id}" value="${w.id}" style="width:14px;height:14px">
+      ${w.brand} ${w.model} (${w.year||'?'}) — ${w.sell} EUR
+      <span class="badge badge-${w.status}" style="margin-left:auto">${w.status==='drop'?'Déjà dans un drop':'Dispo'}</span>
+    </label>`).join('')||'<div style="font-size:12px;color:var(--gray-muted)">Aucune montre disponible</div>';
+  const list=document.getElementById('drops-list');
+  list.innerHTML=(drops||[]).map(d=>`
+    <div class="drop-card">
+      <div><div class="drop-card-title">${d.msg||'Drop sans titre'}</div>
+      <div class="drop-card-meta">Lancement : ${new Date(d.date).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})} · ${d.duration}h · ${(d.watch_ids||[]).length} montre${(d.watch_ids||[]).length>1?'s':''}</div></div>
+      <div class="drop-card-actions">
+        <span class="badge ${new Date(d.date)>new Date()?'badge-planned':'badge-dispo'}">${new Date(d.date)>new Date()?'Planifié':'Terminé'}</span>
+        <button class="btn btn-danger" style="padding:5px 12px;font-size:10px" onclick="deleteDrop(${d.id})">Supprimer</button>
+      </div>
+    </div>`).join('')||'<div style="font-size:12px;color:var(--gray-muted);padding:16px 0">Aucun drop planifié</div>';
+}
+
+async function toggleSiteClosed() {
+  const closed = document.getElementById('site-closed').checked;
+  await sb.from('settings').upsert({key:'site_closed', value: closed ? 'true' : 'false'},{onConflict:'key'});
+  toast(closed ? 'Site fermé — page "Prochainement" active' : 'Site ouvert');
+}
+
+async function saveDrop() {
+  const date=document.getElementById('drop-date').value;
+  const msg=document.getElementById('drop-msg').value;
+  if(!date){toast('Choisir une date');return;}
+  const { data: watches } = await sb.from('watches').select('*');
+  const watchIds=(watches||[]).filter(w=>w.status==='dispo'||w.status==='drop').filter(w=>document.getElementById('drop-w-'+w.id)?.checked).map(w=>w.id);
+  if(!watchIds.length){toast('Sélectionner au moins une montre');return;}
+  for(const id of watchIds) await sb.from('watches').update({status:'drop'}).eq('id',id);
+  await sb.from('drops').insert({date,duration:999,msg,watch_ids:watchIds});
+  // Auto uncheck site closed when a drop is scheduled
+  document.getElementById('site-closed').checked = false;
+  await sb.from('settings').upsert({key:'site_closed', value:'false'},{onConflict:'key'});
+  toast('Drop planifié — le site se met à jour automatiquement');
+  document.getElementById('drop-date').value='';
+  document.getElementById('drop-msg').value='';
+  loadDropsPage();
+}
+
+async function deleteDrop(id) {
+  if(!confirm('Supprimer ce drop ?')) return;
+  await sb.from('drops').delete().eq('id',id);
+  toast('Drop supprimé'); loadDropsPage();
+}
+
+// ── SALES ──
+async function loadSalesPage() {
+  const { data } = await sb.from('watches').select('*').eq('status','sold').order('sold_at',{ascending:false});
+  const sold = data||[];
+  const totalCA=sold.reduce((s,w)=>s+(w.sell||0),0);
+  const totalBuy=sold.reduce((s,w)=>s+(w.buy||0),0);
+  const totalMarge=totalCA-totalBuy;
+  document.getElementById('sales-stats').innerHTML=`
+    <div class="stat-card stat-green"><div class="stat-label">CA total</div><div class="stat-val">${totalCA} EUR</div></div>
+    <div class="stat-card"><div class="stat-label">Coût achats</div><div class="stat-val">${totalBuy} EUR</div></div>
+    <div class="stat-card stat-green"><div class="stat-label">Bénéfice net</div><div class="stat-val">${totalMarge} EUR</div></div>
+    <div class="stat-card"><div class="stat-label">Marge moyenne</div><div class="stat-val">${totalCA?Math.round((totalMarge/totalCA)*100):0}%</div></div>`;
+  const carriers={colissimo:'Colissimo',mondialrelay:'Mondial Relay',chronopost:'Chronopost'};
+  document.getElementById('sales-tbody').innerHTML=sold.map(w=>{
+    const m=(w.sell||0)-(w.buy||0), pct=w.sell?Math.round((m/w.sell)*100):0;
+    const url=trackUrl(w.carrier,w.tracking);
+    return `<tr>
+      <td>${w.sold_at?new Date(w.sold_at).toLocaleDateString('fr-FR'):'—'}</td>
+      <td>${w.brand} ${w.model}</td>
+      <td>${w.buy||0} EUR</td><td>${w.sell||0} EUR</td>
+      <td class="${m>=0?'marge-pos':'marge-neg'}">${m>=0?'+':''}${m} EUR</td>
+      <td style="color:var(--gray-dark)">${pct}%</td>
+      <td>${carriers[w.carrier]||w.carrier||'—'}</td>
+      <td style="font-family:monospace;font-size:12px">${w.tracking||'—'}</td>
+      <td>${url?`<a href="${url}" target="_blank" style="font-size:11px;color:var(--black);text-decoration:none;border-bottom:0.5px solid var(--gray-mid)">Suivre →</a>`:'—'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray-muted);padding:24px">Aucune vente</td></tr>';
+}
+
+function trackUrl(carrier,num) {
+  if(!num) return null;
+  if(carrier==='colissimo') return `https://www.laposte.fr/outils/suivre-vos-envois?code=${num}`;
+  if(carrier==='mondialrelay') return `https://www.mondialrelay.fr/suivi-de-colis/?NumExpedition=${num}`;
+  if(carrier==='chronopost') return `https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=${num}`;
+  return null;
+}
+
+async function exportCSV() {
+  const { data } = await sb.from('watches').select('*').eq('status','sold');
+  const sold=data||[];
+  const carriers={colissimo:'Colissimo',mondialrelay:'Mondial Relay',chronopost:'Chronopost'};
+  const rows=[['Date vente','Marque','Modèle','Année','Lieu achat','Prix achat (EUR)','Prix vente (EUR)','Marge (EUR)','Marge (%)','Transporteur','N suivi']];
+  sold.forEach(w=>{
+    const m=(w.sell||0)-(w.buy||0), pct=w.sell?Math.round((m/w.sell)*100):0;
+    rows.push([w.sold_at||'',w.brand,w.model,w.year||'',w.source||'',w.buy||0,w.sell||0,m,pct+'%',carriers[w.carrier]||w.carrier||'',w.tracking||'']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`thedialfind_ventes_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); toast('Export CSV téléchargé');
+}
+
+// ── EMAILS ──
+async function loadEmailsPage() {
+  const { data } = await sb.from('emails').select('*').order('added_at',{ascending:false});
+  const emails=data||[];
+  document.getElementById('emails-count').textContent=`${emails.length} abonné${emails.length>1?'s':''}`;
+  document.getElementById('email-list').innerHTML=emails.map(e=>`
+    <div class="email-item">
+      <span style="font-size:13px">${e.email}</span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:11px;color:var(--gray-muted)">${e.added_at?new Date(e.added_at).toLocaleDateString('fr-FR'):''}</span>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:10px" onclick="deleteEmail(${e.id})">✕</button>
+      </div>
+    </div>`).join('')||'<div style="padding:24px;text-align:center;font-size:12px;color:var(--gray-muted)">Aucun abonné</div>';
+}
+
+function openAddEmail() {
+  openModal('Ajouter un email',`
+    <div class="form-group" style="margin-bottom:16px"><label>Adresse email</label><input class="field" type="email" id="new-email" placeholder="client@exemple.fr"></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="addEmail()">Ajouter</button>
+    </div>`);
+}
+
+async function addEmail() {
+  const email=document.getElementById('new-email').value.trim();
+  if(!email||!email.includes('@')){toast('Email invalide');return;}
+  const {error}=await sb.from('emails').insert({email});
+  if(error){toast('Email déjà présent ou erreur');return;}
+  closeModal(); toast('Email ajouté'); loadEmailsPage();
+}
+
+async function deleteEmail(id) {
+  await sb.from('emails').delete().eq('id',id);
+  toast('Email supprimé'); loadEmailsPage();
+}
+
+async function exportEmails() {
+  const { data }=await sb.from('emails').select('email');
+  const text=(data||[]).map(e=>e.email).join('\n');
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`thedialfind_emails_${new Date().toISOString().split('T')[0]}.txt`;
+  a.click(); toast('Emails exportés');
+}
+
+// ── ORDERS ──
+async function loadOrdersPage() {
+  const { data } = await sb.from('orders').select('*').order('created_at', { ascending: false });
+  const orders = data || [];
+  document.getElementById('orders-count').textContent = `${orders.length} commande${orders.length > 1 ? 's' : ''}`;
+  const carriers = { colissimo: 'Colissimo', mondialrelay: 'Mondial Relay', chronopost: 'Chronopost' };
+  const statusLabels = { en_attente: 'En attente', payee: 'Payée', en_preparation: 'En préparation', expediee: 'Expédiée', livree: 'Livrée' };
+  const statusColors = { en_attente: 'badge-planned', payee: 'badge-dispo', en_preparation: 'badge-planned', expediee: 'badge-drop', livree: 'badge-sold' };
+
+  document.getElementById('orders-tbody').innerHTML = orders.map(o => {
+    const trackUrl = o.tracking ? (
+      o.carrier === 'colissimo' ? `https://www.laposte.fr/outils/suivre-vos-envois?code=${o.tracking}` :
+      o.carrier === 'mondialrelay' ? `https://www.mondialrelay.fr/suivi-de-colis/?NumExpedition=${o.tracking}` :
+      `https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=${o.tracking}`
+    ) : null;
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px">${o.ref || '—'}</td>
+      <td>${o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR') : '—'}</td>
+      <td><div style="font-size:13px">${o.prenom || ''} ${o.nom || ''}</div><div style="font-size:11px;color:var(--gray-muted)">${o.email || ''}</div></td>
+      <td style="font-size:12px;color:var(--gray-dark)">${(o.items || []).length} article${(o.items || []).length > 1 ? 's' : ''}</td>
+      <td style="font-weight:500">${o.total || 0} EUR</td>
+      <td>${carriers[o.carrier] || o.carrier || '—'}</td>
+      <td><span class="badge ${statusColors[o.status] || 'badge-planned'}">${statusLabels[o.status] || o.status}</span></td>
+      <td>${trackUrl ? `<a href="${trackUrl}" target="_blank" style="font-size:11px;color:var(--black);text-decoration:none;border-bottom:0.5px solid var(--gray-mid)">Suivre →</a>` : '—'}</td>
+      <td><button class="btn btn-secondary" style="padding:5px 12px;font-size:10px" onclick="openUpdateOrder(${o.id})">Mettre à jour</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--gray-muted);padding:24px">Aucune commande</td></tr>';
+}
+
+function openUpdateOrder(id) {
+  openModal('Mettre à jour la commande', `
+    <div class="form-group" style="margin-bottom:12px"><label>Statut</label>
+      <select class="field" id="order-status">
+        <option value="en_attente">En attente de paiement</option>
+        <option value="payee">Payée</option>
+        <option value="en_preparation">En préparation</option>
+        <option value="expediee">Expédiée</option>
+        <option value="livree">Livrée</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:20px"><label>Numéro de suivi</label>
+      <input class="field" type="text" id="order-tracking" placeholder="6X12345678901">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="updateOrder(${id})">Enregistrer</button>
+    </div>`);
+}
+
+async function updateOrder(id) {
+  const status = document.getElementById('order-status').value;
+  const tracking = document.getElementById('order-tracking').value;
+  await sb.from('orders').update({ status, tracking: tracking || null }).eq('id', id);
+  closeModal();
+  toast('Commande mise à jour');
+  loadOrdersPage();
+}
+
+async function exportOrdersCSV() {
+  const { data } = await sb.from('orders').select('*').order('created_at', { ascending: false });
+  const orders = data || [];
+  const carriers = { colissimo: 'Colissimo', mondialrelay: 'Mondial Relay', chronopost: 'Chronopost' };
+  const rows = [['Ref', 'Date', 'Prenom', 'Nom', 'Email', 'Adresse', 'CP', 'Ville', 'Pays', 'Transporteur', 'Total (euros)', 'Statut', 'N suivi']];
+  orders.forEach(o => {
+    rows.push([o.ref||'', o.created_at?new Date(o.created_at).toLocaleDateString('fr-FR'):'', o.prenom||'', o.nom||'', o.email||'', o.adresse||'', o.cp||'', o.ville||'', o.pays||'', carriers[o.carrier]||o.carrier||'', o.total||0, o.status||'', o.tracking||'']);
+  });
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `thedialfind_commandes_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  toast('Export commandes téléchargé');
+}
+
+// ── MODAL / TOAST ──
+function openModal(title,body){document.getElementById('modal-title').textContent=title;document.getElementById('modal-body').innerHTML=body;document.getElementById('modal-bg').classList.add('open');}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+document.getElementById('modal-bg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+</script>
+</body>
+</html>
